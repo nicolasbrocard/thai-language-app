@@ -2,10 +2,15 @@
 
 A speaking-and-listening Thai course in a single HTML file. No alphabet, no install, no account.
 
-- **Use it:** open `index.html` on any HTTPS host (GitHub Pages works) in Safari on iPhone or Chrome on Android, then "Add to Home Screen".
-- **Audio:** your phone's built-in Thai voice. If the app says no Thai voice is found, it shows how to install one.
-- **Speaking check:** uses the browser's Thai speech recognition where available (needs HTTPS and microphone permission); otherwise you self-check against the model.
-- **Progress:** stored in the browser on that device.
+## Install on Android (one-time)
+
+1. In this repo on GitHub: **Settings → Pages → Build and deployment → Deploy from a branch**, pick the branch that holds `index.html`, folder `/ (root)`, Save.
+2. After a minute, open `https://nicolasbrocard.github.io/thai-language-app/` in Chrome on the phone.
+3. Chrome menu **⋮ → Add to Home screen → Install**. It then opens full-screen like an app and works offline.
+
+- **Audio:** the phone's built-in Thai voice. If none is found, the app shows how to install one.
+- **Speaking check:** Chrome's Thai speech recognition (asks for the microphone once); otherwise you self-check against the model.
+- **Progress:** saved on the phone automatically. Settings has a backup code to copy out and restore on another device.
 
 ## How it teaches
 

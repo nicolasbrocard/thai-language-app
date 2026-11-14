@@ -41,11 +41,12 @@ const icon = n => h('span', { html: `<svg viewBox="0 0 24 24" aria-hidden="true"
 
 /* ---------- state ---------- */
 const KEY = 'phuut.v1';
-const def = () => ({ gender: null, rate: 0.9, voice: '', showThai: true, xp: 0, streak: 0, lastDay: '', day: '', dayXp: 0, goal: 40, done: {}, srs: {}, onboarded: false });
+const def = () => ({ gender: null, rate: 0.9, voice: '', showThai: true, xp: 0, streak: 0, lastDay: '', day: '', dayXp: 0, goal: 40, done: {}, srs: {}, hist: {}, onboarded: false });
 let S = def();
 try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 if (S.day !== today()) { S.day = today(); S.dayXp = 0; }
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist().catch(() => {}); } catch (e) {}
 
 /* ---------- content model ---------- */
 const LEXMAP = {};
@@ -196,6 +197,7 @@ function grade(it, ok) {
 function addXp(n) {
   if (S.day !== today()) { S.day = today(); S.dayXp = 0; }
   S.xp += n; S.dayXp += n;
+  S.hist[today()] = S.dayXp; Object.keys(S.hist).sort().slice(0, -90).forEach(k => delete S.hist[k]);
   if (S.lastDay !== today()) { S.streak = S.lastDay === addDays(-1) ? S.streak + 1 : 1; S.lastDay = today(); }
 }
 const liveStreak = () => (S.lastDay === today() || S.lastDay === addDays(-1)) ? S.streak : 0;
@@ -240,16 +242,20 @@ function home() {
 }
 function renderLearn(root) {
   const nx = nextLesson(), due = dueItems().length, allDone = LESSONS.every(l => S.done[l.id]);
+  const warm = Math.min(due, 6), goalMet = S.dayXp >= S.goal;
   root.append(voiceNote() || '');
   root.append(h('div', { class: 'hero' },
-    h('div', { class: 'eyebrow' }, allDone ? 'Course complete' : `Unit ${nx.ui + 1} · Lesson ${nx.li + 1}`),
+    h('div', { class: 'eyebrow' }, allDone ? 'Course complete' : (goalMet ? 'Goal reached today' : 'Today\'s session')),
     h('h2', {}, allDone ? 'Keep it alive with reviews' : nx.title),
-    h('p', {}, allDone ? 'Every word comes back just before you would forget it.' : nx.items.slice(0, 3).map(i => i.en).join(' · ') + ' …'),
-    h('button', { class: 'btn', onclick: () => allDone ? startReview() : startLesson(nx) }, allDone ? 'Review now' : (S.done[nx.id] ? 'Practise again' : (nx.idx === 0 ? 'Start first lesson' : 'Continue')))));
+    h('p', {}, allDone ? 'Every word comes back just before you would forget it.' : (warm ? `${warm} quick ${warm === 1 ? 'review' : 'reviews'}, then ` : '') + `Unit ${nx.ui + 1} · Lesson ${nx.li + 1}. About ${warm ? 8 : 6} minutes.`),
+    h('button', { class: 'btn', onclick: () => allDone ? startReview() : startToday(nx) }, allDone ? 'Review now' : (nx.idx === 0 && !S.xp ? 'Start first lesson' : (goalMet ? 'Do one more' : 'Start')))));
+  const week = h('div', { class: 'week' });
+  for (let d = 6; d >= 0; d--) { const k = addDays(-d), dt = new Date(); dt.setDate(dt.getDate() - d); const xp = S.hist[k] || 0;
+    week.append(h('div', { class: 'day' + (xp >= S.goal ? ' full' : xp ? ' some' : '') + (d ? '' : ' now') }, h('i', {}, xp >= S.goal ? icon('check') : ''), h('span', {}, 'SMTWTFS'[dt.getDay()]))); }
   root.append(h('div', { class: 'goal' },
     h('div', { class: 'line' }, h('span', {}, 'Today'), h('span', {}, `${Math.min(S.dayXp, S.goal)} / ${S.goal} XP`)),
-    h('div', { class: 'bar' }, h('i', { style: `width:${Math.min(100, S.dayXp / S.goal * 100)}%` }))));
-  if (due && !allDone) root.append(h('button', { class: 'btn ghost', onclick: startReview }, icon('loop'), `Review ${due} due ${due === 1 ? 'item' : 'items'}`));
+    h('div', { class: 'bar' }, h('i', { style: `width:${Math.min(100, S.dayXp / S.goal * 100)}%` })), week));
+  if (due > warm && !allDone) root.append(h('button', { class: 'btn ghost', onclick: startReview }, icon('loop'), `Review all ${due} due items`));
   COURSE.forEach((u, ui) => {
     const box = h('section', { class: 'unit' }, h('div', { class: 'unit-h' }, h('span', { class: 'n' }, 'Unit ' + (ui + 1)), h('h3', {}, u.title)), h('p', {}, u.sub));
     LESSONS.filter(l => l.ui === ui).forEach(l => {
@@ -310,6 +316,11 @@ function openSettings() {
   const th = TTS.thaiVoices();
   let armed = false;
   const reset = h('button', { class: 'btn bad', onclick: () => { if (!armed) { armed = true; reset.textContent = 'Tap again to erase all progress'; return; } S = def(); save(); bg.remove(); start(); } }, 'Reset progress');
+  const code = h('textarea', { id: 'backup-code', class: 'code', rows: '3', spellcheck: 'false', 'aria-label': 'Backup code' });
+  const pack = () => btoa(unescape(encodeURIComponent(JSON.stringify(S))));
+  code.value = pack();
+  const copy = h('button', { class: 'btn ghost', onclick: async () => { code.value = pack(); code.select(); let ok = false; try { await navigator.clipboard.writeText(code.value); ok = true; } catch (e) { try { ok = document.execCommand('copy'); } catch (e2) {} } copy.textContent = ok ? 'Copied' : 'Select and copy'; } }, 'Copy code');
+  const restore = h('button', { class: 'btn ghost', onclick: () => { try { const o = JSON.parse(decodeURIComponent(escape(atob(code.value.trim())))); if (!o || typeof o.srs !== 'object' || typeof o.xp !== 'number') throw 0; S = Object.assign(def(), o); save(); bg.remove(); start(); } catch (e) { restore.textContent = 'Not a valid code'; } } }, 'Restore');
   const bg = sheet(
     h('h2', {}, 'Settings'),
     h('div', { class: 'field' }, 'I speak as a', seg([['m', 'Man (khráp)'], ['f', 'Woman (khâ)']], S.gender, v => { S.gender = v; save(); })),
@@ -318,6 +329,8 @@ function openSettings() {
     h('div', { class: 'field' }, 'Thai script under the romanization', seg([[true, 'Show'], [false, 'Hide']], S.showThai, v => { S.showThai = v; save(); app.className = v ? '' : 'no-thai'; })),
     h('div', { class: 'field' }, 'Daily goal', seg([[20, 'Light'], [40, 'Regular'], [80, 'Serious']], S.goal, v => { S.goal = v; save(); })),
     h('button', { class: 'btn ghost', onclick: () => { bg.remove(); startSession([{ t: 'tones' }], { title: 'Tones', free: true }); } }, 'How tones work'),
+    h('label', { class: 'field', for: 'backup-code' }, 'Backup code. Copy it somewhere safe, or paste one here to restore.', code),
+    h('div', { class: 'row' }, copy, restore),
     reset,
     h('button', { class: 'btn', onclick: () => { bg.remove(); if (!sess && !player) home(); } }, 'Done'));
 }
@@ -372,6 +385,10 @@ function buildLesson(L) {
   pick(L.items.filter(i => i.multi), 2).forEach(it => steps.push({ t: 'speak', it }));
   if (L.dialogue) steps.push({ t: 'dialogue', d: L.dialogue });
   return steps;
+}
+function startToday(L) {
+  const warm = shuffle(dueItems()).slice(0, 6).map(it => ({ t: pick(it.multi ? ['listen', 'build', 'speak', 'dictate'] : ['listen', 'pick', 'speak'], 1)[0], it }));
+  startSession([...warm, ...buildLesson(L)], { lesson: L, title: L.title, pool: poolUpTo(L.idx) });
 }
 function startLesson(L) { startSession(buildLesson(L), { lesson: L, title: L.title, pool: poolUpTo(L.idx) }); }
 function startReview() {
