@@ -1,0 +1,1257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Phûut Thai">
+<meta name="theme-color" content="#0C6F66">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>:root{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);box-sizing:border-box}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Phûut Thai</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Inter:wght@400..700&display=swap">
+<style>
+/* Layout: one-screen phone app. Column of [top bar | scrolling stage | action footer]; thumb-reach actions at the bottom.
+   Subject detail: the five Thai tones each own a colour, used wherever romanised Thai appears. */
+:root{
+  --bg:#EDF2F3; --surface:#FFFFFF; --surface-2:#E2EAEC; --ink:#12232B; --ink-2:#55676F; --line:#D3DDE1;
+  --brand:#0C6F66; --on-brand:#FFFFFF; --brand-soft:#D7EEEA;
+  --gold:#F2A413; --on-gold:#2B1C00; --gold-soft:#FDF0D2;
+  --good:#167A3E; --good-bg:#DBF3E3; --bad:#C2332F; --bad-bg:#FBE2E0;
+  --t-mid:#4A5C64; --t-low:#1F5FCC; --t-fall:#C2305F; --t-high:#B86E00; --t-rise:#7440CC;
+  --shadow:0 1px 2px rgba(18,35,43,.06),0 6px 20px rgba(18,35,43,.06);
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Thonburi",sans-serif;
+  --r:18px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0C161B; --surface:#15232A; --surface-2:#1E3038; --ink:#E8F0F3; --ink-2:#9BAEB7; --line:#2A3D46;
+  --brand:#35BFAE; --on-brand:#04211E; --brand-soft:#143B37;
+  --gold:#F6B63C; --on-gold:#2B1C00; --gold-soft:#3A2D10;
+  --good:#58D68D; --good-bg:#123222; --bad:#FF8A80; --bad-bg:#3B1A19;
+  --t-mid:#B4C3CA; --t-low:#7FB0FF; --t-fall:#FF86AC; --t-high:#F6B63C; --t-rise:#B99BFF;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25); color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0C161B; --surface:#15232A; --surface-2:#1E3038; --ink:#E8F0F3; --ink-2:#9BAEB7; --line:#2A3D46;
+  --brand:#35BFAE; --on-brand:#04211E; --brand-soft:#143B37;
+  --gold:#F6B63C; --on-gold:#2B1C00; --gold-soft:#3A2D10;
+  --good:#58D68D; --good-bg:#123222; --bad:#FF8A80; --bad-bg:#3B1A19;
+  --t-mid:#B4C3CA; --t-low:#7FB0FF; --t-fall:#FF86AC; --t-high:#F6B63C; --t-rise:#B99BFF;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25); color-scheme:dark }
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--body);-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;touch-action:manipulation}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+svg{display:block}
+
+#app{height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top{display:flex;align-items:center;gap:10px;padding-block:12px 8px;flex:none}
+.scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding-block:6px 20px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.foot{flex:none;padding-block:10px 14px;display:flex;flex-direction:column;gap:10px}
+
+/* top bar */
+.logo{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:-.02em;margin-right:auto}
+.logo i{font-style:normal;color:var(--brand)}
+.chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:99px;background:var(--surface);font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;box-shadow:var(--shadow)}
+.chip svg{width:16px;height:16px;color:var(--gold)}
+.iconbtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--ink-2)}
+.iconbtn svg{width:22px;height:22px}
+.iconbtn:active{background:var(--surface-2)}
+
+/* nav */
+.nav{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding-block:8px 10px;border-top:1px solid var(--line)}
+.nav button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border-radius:14px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.nav button svg{width:24px;height:24px}
+.nav button[aria-current="page"]{color:var(--brand);background:var(--brand-soft)}
+
+/* buttons */
+.btn{min-height:54px;width:100%;border-radius:16px;background:var(--brand);color:var(--on-brand);font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 18px;transition:transform .08s, opacity .15s}
+.btn:active{transform:scale(.98)}
+.btn[disabled]{opacity:.35;pointer-events:none}
+.btn.ghost{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
+.btn.gold{background:var(--gold);color:var(--on-gold)}
+.btn.bad{background:var(--bad-bg);color:var(--bad)}
+.btn svg{width:20px;height:20px}
+.row{display:flex;gap:10px}
+.row>*{flex:1;min-width:0}
+.link{color:var(--ink-2);font-size:14px;font-weight:600;text-decoration:underline;text-underline-offset:3px;padding:8px;align-self:center}
+
+/* home */
+.hero{background:var(--brand);color:var(--on-brand);border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.hero .eyebrow{color:inherit;opacity:.8}
+.hero h2{font-size:26px;line-height:1.1}
+.hero p{opacity:.85;font-size:14px}
+.hero .btn{background:var(--gold);color:var(--on-gold)}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.goal{background:var(--surface);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow)}
+.goal .line{display:flex;justify-content:space-between;font-size:14px;font-weight:600}
+.goal .line span:last-child{color:var(--ink-2);font-variant-numeric:tabular-nums}
+.bar{height:10px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:99px;background:var(--gold);transition:width .35s ease}
+.unit{display:flex;flex-direction:column;gap:8px}
+.unit-h{display:flex;align-items:baseline;gap:10px;padding-top:6px}
+.unit-h .n{font-family:var(--display);font-weight:800;font-size:15px;color:var(--brand)}
+.unit-h h3{font-size:19px}
+.unit-h+p{color:var(--ink-2);font-size:14px;margin-top:-6px}
+.lesson{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow)}
+.lesson .dot{width:38px;height:38px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;font-family:var(--display);background:var(--surface-2);color:var(--ink-2)}
+.lesson.is-done .dot{background:var(--brand-soft);color:var(--brand)}
+.lesson.next .dot{background:var(--gold);color:var(--on-gold)}
+.lesson .dot svg{width:18px;height:18px}
+.lesson .t{flex:1;min-width:0}
+.lesson .t b{display:block;font-weight:650}
+.lesson .t span{display:block;font-size:13px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lesson>svg{width:18px;height:18px;color:var(--ink-2);flex:none}
+.card{background:var(--surface);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+.card h3{font-size:18px}
+.card p{color:var(--ink-2);font-size:14px}
+.note{background:var(--gold-soft);border-radius:var(--r);padding:14px 16px;font-size:14px;display:flex;flex-direction:column;gap:8px}
+.note b{font-weight:700}
+
+/* session */
+.sess-top{display:flex;align-items:center;gap:10px;padding-block:10px 6px;flex:none}
+.sess-top .bar{flex:1}
+.sess-top .bar>i{background:var(--brand)}
+.stage{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding-block:10px 16px;scrollbar-width:none}
+.stage::-webkit-scrollbar{display:none}
+.stage>h2{font-size:23px;line-height:1.15}
+.stage>h2 small{display:block;font:600 12px/1.6 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.enter{animation:enter .22s ease both}
+@keyframes enter{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.enter{animation:none}.bar>i{transition:none}}
+
+.rom{font-weight:650;letter-spacing:.005em}
+.rom .mid{color:var(--t-mid)}.rom .low{color:var(--t-low)}.rom .fall{color:var(--t-fall)}.rom .high{color:var(--t-high)}.rom .rise{color:var(--t-rise)}
+.rom .hy{color:var(--line)}
+.thai{color:var(--ink-2);font-size:17px}
+.no-thai .thai{display:none}
+
+.learn{margin:auto 0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;background:var(--surface);border-radius:26px;padding:26px 18px;box-shadow:var(--shadow)}
+.learn .pic{font-size:64px;line-height:1}
+.learn .rom{font-size:clamp(26px,8vw,36px);line-height:1.15;font-family:var(--display)}
+.learn .en{font-size:19px;font-weight:600}
+.learn .hint{font-size:14px;color:var(--ink-2)}
+.play{display:flex;gap:12px;align-items:center;justify-content:center}
+.pbtn{width:76px;height:76px;border-radius:50%;background:var(--brand);color:var(--on-brand);display:grid;place-items:center;box-shadow:0 6px 0 color-mix(in srgb,var(--brand) 70%,#000);transition:transform .08s,box-shadow .08s}
+.pbtn:active{transform:translateY(4px);box-shadow:0 2px 0 color-mix(in srgb,var(--brand) 70%,#000)}
+.pbtn svg{width:34px;height:34px}
+.pbtn.sm{width:52px;height:52px;background:var(--surface);color:var(--brand);box-shadow:inset 0 0 0 1.5px var(--line)}
+.pbtn.sm:active{transform:scale(.95)}
+.pbtn.sm svg{width:24px;height:24px}
+.pbtn.speaking{animation:pulse 1s ease infinite}
+@keyframes pulse{50%{filter:brightness(1.15)}}
+.stage>.play{padding:14px 0}
+.words{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.word{display:flex;flex-direction:column;align-items:center;background:var(--surface-2);border-radius:12px;padding:8px 10px;min-width:52px}
+.word .rom{font-size:16px}
+.word small{font-size:11.5px;color:var(--ink-2);max-width:110px;line-height:1.25}
+
+.opts{display:grid;gap:10px}
+.opts.two{grid-template-columns:1fr 1fr}
+.opt{display:flex;align-items:center;gap:12px;min-height:60px;text-align:left;padding:12px 14px;border-radius:16px;background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--line);font-weight:600}
+.opts.two .opt{flex-direction:column;justify-content:center;text-align:center;gap:6px;min-height:104px}
+.opt .em{font-size:30px;line-height:1}
+.opt .num{width:30px;height:30px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-size:13px;color:var(--ink-2);flex:none}
+.opt .num svg{width:16px;height:16px}
+.opt.sel{box-shadow:inset 0 0 0 2.5px var(--brand);background:var(--brand-soft)}
+.opt.ok{box-shadow:inset 0 0 0 2.5px var(--good);background:var(--good-bg)}
+.opt.no{box-shadow:inset 0 0 0 2.5px var(--bad);background:var(--bad-bg)}
+.locked .opt{pointer-events:none}
+.opt .after{display:block;font-size:13px;font-weight:500;color:var(--ink-2)}
+
+.prompt{background:var(--surface);border-radius:20px;padding:18px;font-size:21px;font-weight:650;box-shadow:var(--shadow);display:flex;gap:12px;align-items:center}
+.prompt .em{font-size:34px}
+.slots{min-height:118px;border-radius:18px;border:2px dashed var(--line);padding:10px;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start}
+.bank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.tile{padding:10px 14px;min-height:46px;border-radius:13px;background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--line),0 3px 0 var(--line);font-size:17px}
+.tile.used{visibility:hidden}
+.locked .tile{pointer-events:none}
+
+.mic{width:104px;height:104px;border-radius:50%;background:var(--gold);color:var(--on-gold);display:grid;place-items:center;margin:6px auto;box-shadow:0 7px 0 color-mix(in srgb,var(--gold) 65%,#000);transition:transform .08s,box-shadow .08s}
+.mic:active{transform:translateY(5px);box-shadow:0 2px 0 color-mix(in srgb,var(--gold) 65%,#000)}
+.mic svg{width:44px;height:44px}
+.mic.on{animation:ring 1.1s ease infinite}
+@keyframes ring{0%{outline:0 solid color-mix(in srgb,var(--gold) 60%,transparent)}100%{outline:22px solid transparent}}
+.center{text-align:center;color:var(--ink-2);font-size:14px}
+.heard{background:var(--surface-2);border-radius:14px;padding:10px 14px;font-size:15px;text-align:center}
+.answer{background:var(--surface);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;box-shadow:var(--shadow)}
+.answer .rom{font-size:24px;font-family:var(--display)}
+
+.fb{border-radius:18px;padding:12px 14px;display:flex;gap:12px;align-items:center}
+.fb.ok{background:var(--good-bg);color:var(--good)}
+.fb.no{background:var(--bad-bg);color:var(--bad)}
+.fb .tx{flex:1;min-width:0}
+.fb b{display:block;font-family:var(--display);font-size:18px}
+.fb .rom{display:block;font-size:16px}
+.fb .rom span{color:inherit!important}
+.fb small{display:block;font-size:13.5px;opacity:.9}
+.fb .pbtn.sm{background:transparent;color:inherit;box-shadow:inset 0 0 0 1.5px currentColor;width:46px;height:46px;flex:none}
+
+.tip{margin:auto 0;background:var(--gold-soft);border-radius:26px;padding:24px 20px;display:flex;flex-direction:column;gap:12px}
+.tip h2{font-size:24px}
+.tip p{font-size:17px;line-height:1.5}
+.tip b{font-weight:700}
+.tones{display:grid;gap:8px}
+.tones div{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:14px;padding:8px 12px}
+.tones svg{width:44px;height:26px;flex:none}
+.tones .rom{font-size:18px;min-width:64px}
+.tones small{color:var(--ink-2);font-size:13px}
+
+.chat{display:flex;flex-direction:column;gap:10px}
+.bub{max-width:86%;border-radius:18px;padding:10px 14px;background:var(--surface);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:2px;text-align:left}
+.bub.me{align-self:flex-end;background:var(--brand-soft)}
+.bub .rom{font-size:17px}
+.bub small{font-size:13.5px;color:var(--ink-2)}
+.bub.todo{border:2px dashed var(--brand);background:transparent;box-shadow:none}
+.bub.todo small{color:var(--ink);font-size:16px;font-weight:600}
+
+.done{margin:auto 0;text-align:center;display:flex;flex-direction:column;gap:18px;align-items:center}
+.done .big{font-size:72px;line-height:1}
+.done h2{font-size:30px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}
+.stat{background:var(--surface);border-radius:16px;padding:14px 6px;box-shadow:var(--shadow)}
+.stat b{display:block;font:800 24px var(--display);font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--ink-2);font-weight:600}
+
+/* words list */
+.search{-webkit-appearance:none;appearance:none;min-height:48px;flex:none;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);padding:0 14px;font:inherit;width:100%}
+.wrow{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:14px;padding:10px 12px;width:100%;text-align:left}
+.wrow .t{flex:1;min-width:0}
+.wrow .rom{display:block;font-size:16px}
+.wrow small{display:block;color:var(--ink-2);font-size:13.5px}
+.wrow svg{width:20px;height:20px;color:var(--brand);flex:none}
+.lvl{display:flex;gap:3px;flex:none}
+.lvl i{width:5px;height:14px;border-radius:3px;background:var(--surface-2)}
+.lvl i.on{background:var(--brand)}
+
+/* sheet */
+.sheet-bg{position:fixed;inset:0;background:rgba(6,14,18,.5);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sheet{background:var(--bg);width:100%;max-width:520px;max-height:88%;overflow-y:auto;border-radius:24px 24px 0 0;display:flex;flex-direction:column;gap:14px;
+  padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet h2{font-size:22px}
+.field{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600}
+.field select,.field input[type=range]{width:100%;min-height:44px;font:inherit}
+.field select{border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);padding:0 10px}
+input[type=range]{accent-color:var(--brand)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;background:var(--surface-2);border-radius:14px;padding:4px}
+.seg button{min-height:44px;border-radius:11px;font-weight:650;font-size:15px}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:var(--shadow)}
+
+.player{margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+.player .en{font-size:22px;font-weight:650;min-height:2.6em;display:flex;align-items:center}
+.player .rom{font-size:28px;font-family:var(--display);min-height:1.3em}
+.player .phase{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding-top:4px}
+.day{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--ink-2)}
+.day i{width:26px;height:26px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;color:var(--on-gold)}
+.day i svg{width:14px;height:14px}
+.day.some i{background:var(--gold-soft);box-shadow:inset 0 0 0 2px var(--gold)}
+.day.full i{background:var(--gold)}
+.day.now span{color:var(--ink)}
+.code{width:100%;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink-2);padding:8px 10px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;resize:none;word-break:break-all}
+</style>
+<div id="app"></div>
+<script>
+/* Phûut Thai — course content.
+   Sentences are written as space-separated Thai words in the MALE form (ผม / ครับ).
+   The app swaps in ฉัน / ค่ะ / คะ for female speakers and derives the romanization from LEX,
+   so every word used below must have a LEX line:  thai|romanization|gloss|emoji(optional)
+   Tones in romanization: a = mid, à = low, â = falling, á = high, ǎ = rising. */
+
+const LEX = `
+สวัสดี|sà-wàt-dii|hello|🙏
+ครับ|khráp|polite word (man)
+ค่ะ|khâ|polite word (woman)
+คะ|khá|polite word (woman, question)
+ขอบคุณ|khàwp-khun|thank you
+ขอโทษ|khǎw-thôot|sorry, excuse me
+ไม่เป็นไร|mâi-pen-rai|no problem
+ใช่|châi|yes, right|✅
+ไม่|mâi|not
+มาก|mâak|very, a lot
+สบายดี|sà-baai-dii|fine, well
+สบาย|sà-baai|well, comfortable
+ไหม|mǎi|(makes a yes/no question)
+ผม|phǒm|I (man)
+ฉัน|chǎn|I (woman)
+คุณ|khun|you
+แล้ว|láew|already; and then
+ล่ะ|lâ|what about…?
+ชื่อ|chûe|name
+อะไร|à-rai|what|❓
+ทอม|thawm|Tom
+ยินดีที่ได้รู้จัก|yin-dii-thîi-dâi-rúu-jàk|nice to meet you|🤝
+มา|maa|come
+จาก|jàak|from
+ไหน|nǎi|where, which
+ฝรั่งเศส|fà-ràng-sèet|France|🇫🇷
+เอา|ao|want, take
+น้ำ|nám|water|💧
+กาแฟ|kaa-fae|coffee|☕
+เบียร์|bia|beer|🍺
+อัน|an|piece, one (thing)
+นี้|níi|this
+มี|mii|have, there is
+น้ำแข็ง|nám-khǎeng|ice|🧊
+ห้องน้ำ|hâwng-nám|toilet|🚻
+ได้|dâi|can, OK|👌
+ชอบ|châwp|like|👍
+ดี|dii|good
+อร่อย|à-ràwy|delicious|😋
+ร้อน|ráwn|hot|🥵
+เย็น|yen|cold, cool|❄️
+หนึ่ง|nùeng|one|1️⃣
+สอง|sǎwng|two|2️⃣
+สาม|sǎam|three|3️⃣
+สี่|sìi|four|4️⃣
+ห้า|hâa|five|5️⃣
+หก|hòk|six|6️⃣
+เจ็ด|jèt|seven|7️⃣
+แปด|pàet|eight|8️⃣
+เก้า|kâo|nine|9️⃣
+สิบ|sìp|ten|🔟
+ยี่สิบ|yîi-sìp|twenty
+ร้อย|ráwy|hundred|💯
+พัน|phan|thousand
+แก้ว|kâew|glass, cup|🥛
+เท่าไหร่|thâo-rài|how much
+บาท|bàat|baht|💵
+แพง|phaeng|expensive|💸
+ลด|lót|reduce, discount
+ถูก|thùuk|cheap
+ข้าว|khâao|rice|🍚
+ไก่|kài|chicken|🐔
+หมู|mǔu|pork|🐷
+ข้าวผัด|khâao-phàt|fried rice|🍛
+ผัดไทย|phàt-thai|pad thai|🍜
+ขอ|khǎw|may I have
+เผ็ด|phèt|spicy|🌶️
+นิดหน่อย|nít-nàwy|a little|🤏
+กิน|kin|eat|🍽️
+ใส่|sài|put in, add
+น้ำตาล|nám-taan|sugar|🍬
+ผัก|phàk|vegetables|🥬
+หิว|hǐu|hungry|🤤
+อิ่ม|ìm|full (of food)
+อยาก|yàak|want to
+เช็คบิล|chék-bin|the bill|🧾
+ดื่ม|dùem|drink|🥤
+อีก|ìik|more, another
+ที่ไหน|thîi-nǎi|where
+อยู่|yùu|be at, live
+โรงแรม|roong-raem|hotel|🏨
+ร้านอาหาร|ráan-aa-hǎan|restaurant|🍴
+ที่นี่|thîi-nîi|here|📍
+ที่นั่น|thîi-nân|there|👉
+ที่|thîi|at
+ไป|pai|go
+ตรงไป|trong-pai|go straight|⬆️
+เลี้ยว|líao|turn
+ซ้าย|sáai|left|⬅️
+ขวา|khwǎa|right|➡️
+จอด|jàwt|stop, park|🛑
+ใกล้|klâi|near
+ไกล|klai|far
+รถ|rót|car|🚗
+แท็กซี่|tháek-sîi|taxi|🚕
+จักรยาน|jàk-krà-yaan|bicycle|🚲
+สนามบิน|sà-nǎam-bin|airport|✈️
+กี่|kìi|how many
+ถึง|thǔeng|arrive
+ช้า|cháa|slow|🐢
+หน่อย|nàwy|a bit (softens a request)
+เข้าใจ|khâo-jai|understand|💡
+พูด|phûut|speak|🗣️
+ภาษาไทย|phaa-sǎa-thai|Thai (language)|🇹🇭
+ภาษาอังกฤษ|phaa-sǎa-ang-krìt|English (language)|🇬🇧
+อีกที|ìik-thii|again, once more|🔁
+รู้|rúu|know
+นี่|nîi|this (thing)
+เรียก|rîak|call
+ว่า|wâa|that, saying
+แปล|plae|translate, mean
+ช่วย|chûai|help|🆘
+ด้วย|dûai|also; please
+เจ็บ|jèp|hurt|🤕
+ยา|yaa|medicine|💊
+โรงพยาบาล|roong-phá-yaa-baan|hospital|🏥
+หมอ|mǎw|doctor|🩺
+ระวัง|rá-wang|careful!|⚠️
+เหนื่อย|nùeai|tired|😮‍💨
+วันนี้|wan-níi|today|📅
+พรุ่งนี้|phrûng-níi|tomorrow|⏭️
+เมื่อวาน|mûea-waan|yesterday|⏮️
+ตอนนี้|tawn-níi|now
+จะ|jà|will
+เมื่อไหร่|mûea-rài|when
+โมง|moong|o'clock|🕙
+เปิด|pòet|open|🔓
+ปิด|pìt|close, closed|🔒
+ตอนเช้า|tawn-cháo|in the morning|🌅
+ตอนเย็น|tawn-yen|in the evening|🌇
+รอ|raw|wait|✋
+แป๊บนึง|páep-nueng|a moment
+ยัง|yang|not yet, still
+เสร็จ|sèt|finished
+หรือ|rǔe|or
+เร็ว|reo|fast|⚡
+นาที|naa-thii|minute|⏱️
+เพื่อน|phûean|friend|🧑‍🤝‍🧑
+แฟน|faen|partner, boyfriend/girlfriend|❤️
+ลูก|lûuk|child|🧒
+พ่อ|phâw|father|👨
+แม่|mâe|mother|👩
+คน|khon|person, people|🧍
+สวย|sǔai|beautiful|🌺
+ใจดี|jai-dii|kind|😊
+สนุก|sà-nùk|fun|🎉
+ใหญ่|yài|big|🐘
+เล็ก|lék|small|🐜
+เก่ง|kèng|skilled, good at|🏅
+ทำงาน|tham-ngaan|work|💼
+บ้าน|bâan|home, house|🏠
+กลับ|klàp|return, go back
+เมืองไทย|mueang-thai|Thailand|🇹🇭
+ปี|pii|year
+ซื้อ|súe|buy|🛍️
+ตลาด|tà-làat|market|🧺
+จ่าย|jàai|pay
+บัตร|bàt|card|💳
+เงินสด|ngoen-sòt|cash|💵
+ถุง|thǔng|bag
+สี|sǐi|colour
+แดง|daeng|red|🔴
+ดำ|dam|black|⚫
+ขาว|khǎao|white|⚪
+กว่า|kwàa|more than, -er
+ลอง|lawng|try
+อื่น|ùen|other
+ห้อง|hâwng|room|🚪
+ว่าง|wâang|free, vacant
+คืน|khuen|night|🌙
+ละ|lá|per
+จอง|jawng|book, reserve
+แอร์|ae|air-con|🌬️
+กุญแจ|kun-jae|key|🔑
+คิด|khít|think|🤔
+จริง|jing|true, real
+แน่นอน|nâe-nawn|of course
+อาจจะ|àat-jà|maybe
+รัก|rák|love|❤️
+มีความสุข|mii-khwaam-sùk|happy|😄
+เสียใจ|sǐa-jai|sad, sorry|😢
+ทำไม|tham-mai|why
+เพราะ|phráw|because
+แต่|tàe|but
+กับ|kàp|with, and
+ด้วยกัน|dûai-kan|together
+ไทย|thai|Thai
+ก่อน|kàwn|first, before
+นะ|ná|(softener, "okay?")
+เจอ|joe|meet
+กัน|kan|each other
+โชคดี|chôok-dii|good luck|🍀
+ยินดี|yin-dii|glad; you're welcome
+เช่นกัน|chên-kan|likewise
+เดินทาง|doen-thaang|travel
+ปลอดภัย|plàwt-phai|safe
+ฝันดี|fǎn-dii|sweet dreams|😴
+`;
+
+/* item = [thai, english, emoji?]   mix = sentences built only from words already met.
+   dialogue line = [speaker, thai, english]; the learner plays speaker "B". */
+const COURSE = [
+{ id:'u1', title:'First words', sub:'Greet, thank, introduce yourself', lessons:[
+  { title:'Hello and thank you',
+    tip:['The polite word', 'Thai adds a small polite word at the end of almost every sentence. Men say <b>khráp</b>, women say <b>khâ</b>. It carries no meaning of its own, it just makes you sound friendly. When in doubt, add it.'],
+    items:[['สวัสดี ครับ','Hello','🙏'],['ขอบคุณ ครับ','Thank you','🙇'],['ขอโทษ ครับ','Sorry / Excuse me'],['ไม่เป็นไร','No problem / Never mind'],['ใช่','Yes, that\'s right'],['ไม่ ใช่','No, that\'s not right','❌'],['ขอบคุณ มาก ครับ','Thank you very much']],
+    mix:[['ใช่ ครับ','Yes (polite)'],['ไม่เป็นไร ครับ','No problem (polite)'],['ไม่ ใช่ ครับ','No, that\'s not right (polite)']] },
+  { title:'How are you?',
+    tip:['Questions with mǎi', 'Put <b>mǎi</b> at the end of a statement and it becomes a yes/no question. <b>sà-baai-dii</b> = (you are) well. <b>sà-baai-dii mǎi</b> = are you well? To say no, put <b>mâi</b> (not) in front: <b>mâi sà-baai</b>.'],
+    items:[['สบายดี ไหม ครับ','How are you?'],['สบายดี ครับ','I\'m fine'],['ผม','I, me'],['คุณ','you','🫵'],['แล้ว คุณ ล่ะ ครับ','And you?'],['ไม่ สบาย','not well, sick','🤒']],
+    mix:[['คุณ สบายดี ไหม ครับ','Are you well?'],['ผม สบายดี ครับ ขอบคุณ ครับ','I\'m fine, thank you'],['ผม ไม่ สบาย','I\'m not well']] },
+  { title:'Names',
+    tip:['Verbs never change', 'Thai has no am / is / are and no verb endings. <b>phǒm chûe Tom</b> is literally "I name Tom". One form of each word, forever. You build sentences like Lego.'],
+    items:[['ชื่อ','name, to be called'],['อะไร','what'],['คุณ ชื่อ อะไร ครับ','What\'s your name?'],['ผม ชื่อ ทอม ครับ','My name is Tom'],['ยินดีที่ได้รู้จัก ครับ','Nice to meet you'],['คุณ มา จาก ไหน ครับ','Where are you from?'],['ผม มา จาก ฝรั่งเศส','I\'m from France']],
+    mix:[['คุณ ชื่อ ทอม ใช่ ไหม ครับ','Your name is Tom, right?'],['ใช่ ครับ ผม ชื่อ ทอม','Yes, my name is Tom'],['คุณ มา จาก ฝรั่งเศส ใช่ ไหม ครับ','You\'re from France, right?']],
+    dialogue:{ title:'Meeting someone', lines:[['A','สวัสดี ครับ คุณ ชื่อ อะไร ครับ','Hello, what\'s your name?'],['B','สวัสดี ครับ ผม ชื่อ ทอม ครับ','Hello, my name is Tom.'],['A','คุณ มา จาก ไหน ครับ','Where are you from?'],['B','ผม มา จาก ฝรั่งเศส ครับ','I\'m from France.'],['A','ยินดีที่ได้รู้จัก ครับ','Nice to meet you.'],['B','ยินดีที่ได้รู้จัก ครับ','Nice to meet you.']] } },
+]},
+{ id:'u2', title:'Want, have, like', sub:'The three verbs that get you fed', lessons:[
+  { title:'I want, I don\'t want',
+    tip:['mâi = not', 'Put <b>mâi</b> (falling tone) in front of any verb to negate it. <b>ao</b> = want. <b>mâi ao</b> = don\'t want. That one pattern works for every verb in the language.'],
+    items:[['เอา','want, take','🤲'],['ไม่ เอา ครับ','No thanks, I don\'t want it'],['น้ำ','water'],['กาแฟ','coffee'],['เบียร์','beer'],['เอา น้ำ ครับ','I\'ll have water'],['อัน นี้','this one','👇']],
+    mix:[['เอา กาแฟ ครับ','I\'ll have coffee'],['เอา อัน นี้ ครับ','I\'ll take this one'],['ไม่ เอา เบียร์ ครับ','I don\'t want beer'],['เอา เบียร์ ไหม ครับ','Do you want a beer?']] },
+  { title:'Do you have…?',
+    tip:['Answer with the verb', 'Thai has no single word for yes or no. You answer with the verb from the question. <b>mii mǎi?</b> (do you have?) → <b>mii</b> (have) or <b>mâi mii</b> (not have).'],
+    items:[['มี','have, there is'],['ไม่ มี','don\'t have, there isn\'t'],['มี น้ำ ไหม ครับ','Do you have water?'],['น้ำแข็ง','ice'],['ห้องน้ำ','toilet'],['มี ห้องน้ำ ไหม ครับ','Is there a toilet?'],['ได้','can, OK'],['ไม่ ได้','cannot, not OK','🚫']],
+    mix:[['มี กาแฟ ไหม ครับ','Do you have coffee?'],['ไม่ มี น้ำแข็ง ครับ','There\'s no ice'],['มี เบียร์ ครับ','We have beer'],['ได้ ไหม ครับ','Is that OK?'],['ได้ ครับ','Yes, OK']] },
+  { title:'Like it, love it',
+    tip:['No "is" for descriptions', 'Describing words work like verbs. <b>à-ràwy</b> alone means "it is delicious". Add <b>mâak</b> after it for "very". Descriptions follow the thing: <b>kaa-fae yen</b> = coffee cold = iced coffee.'],
+    items:[['ชอบ','like'],['ดี','good','👍'],['อร่อย','delicious'],['อร่อย มาก','very delicious'],['ผม ชอบ กาแฟ','I like coffee'],['ร้อน','hot'],['เย็น','cold, cool'],['กาแฟ เย็น','iced coffee','🧋']],
+    mix:[['ผม ไม่ ชอบ เบียร์','I don\'t like beer'],['คุณ ชอบ กาแฟ ไหม ครับ','Do you like coffee?'],['ดี มาก ครับ','Very good'],['เอา กาแฟ เย็น ครับ','I\'ll have an iced coffee'],['น้ำ เย็น','cold water'],['ร้อน มาก','very hot']],
+    dialogue:{ title:'At the coffee stand', lines:[['A','สวัสดี ครับ เอา อะไร ครับ','Hello, what would you like?'],['B','มี กาแฟ เย็น ไหม ครับ','Do you have iced coffee?'],['A','มี ครับ','We do.'],['B','เอา กาแฟ เย็น ครับ','I\'ll have an iced coffee.'],['A','เอา น้ำ ไหม ครับ','Do you want water?'],['B','ไม่ เอา ครับ ขอบคุณ ครับ','No thanks.']] } },
+]},
+{ id:'u3', title:'Numbers and money', sub:'Count, ask prices, bargain', lessons:[
+  { title:'One to five',
+    tip:['Thing first, then how many', 'Thai counts like "coffee two cups": the thing, the number, then a counting word. <b>kâew</b> counts glasses and cups. <b>an</b> counts almost any small object.'],
+    items:[['หนึ่ง','one'],['สอง','two'],['สาม','three'],['สี่','four'],['ห้า','five'],['เอา สอง อัน ครับ','I\'ll take two'],['แก้ว','glass, cup'],['เอา กาแฟ สอง แก้ว ครับ','Two coffees, please']],
+    mix:[['เอา สาม อัน ครับ','I\'ll take three'],['เอา น้ำ หนึ่ง แก้ว ครับ','One glass of water, please'],['เอา เบียร์ สี่ แก้ว ครับ','Four glasses of beer, please'],['เอา ห้า อัน ครับ','I\'ll take five']] },
+  { title:'Six to a hundred',
+    tip:['Numbers are logical', 'Thirty is "three ten": <b>sǎam sìp</b>. Two hundred is "two hundred": <b>sǎwng ráwy</b>. Twelve is "ten two": <b>sìp sǎwng</b>. Only twenty is irregular: <b>yîi-sìp</b>.'],
+    items:[['หก','six'],['เจ็ด','seven'],['แปด','eight'],['เก้า','nine'],['สิบ','ten'],['ยี่สิบ','twenty'],['ร้อย','hundred']],
+    mix:[['สาม สิบ','thirty'],['ห้า สิบ','fifty'],['สอง ร้อย','two hundred'],['สิบ สอง','twelve'],['ยี่สิบ ห้า','twenty-five'],['หนึ่ง ร้อย ห้า สิบ','one hundred and fifty']] },
+  { title:'How much is it?',
+    tip:['Bargaining politely', 'At markets a smile and <b>lót dâi mǎi khráp</b> (can you reduce?) is expected. <b>dâi mǎi</b> after anything means "can I / could you?".'],
+    items:[['เท่าไหร่','how much'],['อัน นี้ เท่าไหร่ ครับ','How much is this?'],['บาท','baht'],['ห้า สิบ บาท','fifty baht'],['แพง','expensive'],['ถูก','cheap','🪙'],['ลด ได้ ไหม ครับ','Can you lower the price?'],['พัน','thousand']],
+    mix:[['สอง ร้อย บาท ครับ','Two hundred baht'],['ไม่ แพง','not expensive'],['กาแฟ เท่าไหร่ ครับ','How much is the coffee?'],['ร้อย ยี่สิบ บาท','a hundred and twenty baht'],['หนึ่ง พัน บาท','one thousand baht'],['ถูก มาก','very cheap'],['แพง มาก','very expensive']],
+    dialogue:{ title:'At the market', lines:[['B','อัน นี้ เท่าไหร่ ครับ','How much is this?'],['A','สอง ร้อย บาท ครับ','Two hundred baht.'],['B','แพง มาก ลด ได้ ไหม ครับ','Very expensive. Can you lower it?'],['A','ร้อย ห้า สิบ บาท ครับ','A hundred and fifty baht.'],['B','ได้ ครับ เอา สอง อัน ครับ','OK, I\'ll take two.'],['A','ขอบคุณ ครับ','Thank you.']] } },
+]},
+{ id:'u4', title:'Eating out', sub:'Order, adjust the spice, pay', lessons:[
+  { title:'Ordering food',
+    tip:['khǎw = may I have', '<b>khǎw</b> + thing is the polite way to order. Ingredients follow the dish: <b>khâao-phàt kài</b> = fried rice (with) chicken.'],
+    items:[['ข้าว','rice'],['ไก่','chicken'],['หมู','pork'],['ข้าวผัด','fried rice'],['ผัดไทย','pad thai'],['ขอ','may I have','🙋'],['ขอ ข้าวผัด ไก่ ครับ','Chicken fried rice, please']],
+    mix:[['ขอ ผัดไทย ครับ','Pad thai, please'],['ขอ ข้าวผัด หมู ครับ','Pork fried rice, please'],['ขอ น้ำ สอง แก้ว ครับ','Two glasses of water, please'],['มี ผัดไทย ไหม ครับ','Do you have pad thai?'],['ผม ชอบ ผัดไทย มาก','I really like pad thai']] },
+  { title:'Not too spicy',
+    tip:['dâi after a verb = can', '<b>kin phèt dâi</b> = eat spicy can = "I can eat spicy food". <b>kin phèt mâi dâi</b> = "I can\'t". The ability word comes last.'],
+    items:[['เผ็ด','spicy'],['ไม่ เผ็ด','not spicy'],['เผ็ด นิดหน่อย','a little spicy'],['กิน','eat'],['ผม ไม่ กิน เผ็ด','I don\'t eat spicy food'],['ใส่','put in, add','🥄'],['น้ำตาล','sugar'],['ไม่ ใส่ น้ำตาล','no sugar'],['ผัก','vegetables']],
+    mix:[['เผ็ด ไหม ครับ','Is it spicy?'],['เผ็ด มาก','very spicy'],['ไม่ ใส่ น้ำแข็ง ครับ','No ice, please'],['ผม ไม่ กิน หมู','I don\'t eat pork'],['ผม กิน เผ็ด ได้','I can eat spicy food'],['ขอ ไม่ เผ็ด ครับ','Not spicy, please'],['ผม ชอบ ผัก','I like vegetables']] },
+  { title:'Hungry, full, the bill',
+    tip:['láew = already', '<b>láew</b> after a verb marks something as done or now true. <b>ìm láew</b> = full already = "I\'m full". <b>kin láew</b> = "I\'ve eaten". <b>yàak</b> + verb = want to do.'],
+    items:[['หิว','hungry'],['อิ่ม แล้ว','I\'m full','😌'],['อยาก','want to (do)'],['ผม อยาก กิน ผัดไทย','I want to eat pad thai'],['ดื่ม','drink'],['เช็คบิล ครับ','The bill, please'],['ขอ น้ำ อีก หนึ่ง แก้ว ครับ','One more glass of water, please']],
+    mix:[['หิว ไหม ครับ','Are you hungry?'],['ผม หิว มาก','I\'m very hungry'],['คุณ อยาก กิน อะไร ครับ','What do you want to eat?'],['ผม อยาก ดื่ม กาแฟ','I want to drink coffee'],['กิน ข้าว แล้ว','I\'ve already eaten'],['ขอ ข้าว อีก ครับ','More rice, please']],
+    dialogue:{ title:'At the restaurant', lines:[['A','คุณ อยาก กิน อะไร ครับ','What would you like to eat?'],['B','ขอ ข้าวผัด ไก่ ครับ ไม่ เผ็ด','Chicken fried rice, please. Not spicy.'],['A','ดื่ม อะไร ครับ','What will you drink?'],['B','ขอ น้ำ หนึ่ง แก้ว ครับ ไม่ ใส่ น้ำแข็ง','A glass of water, please. No ice.'],['A','อร่อย ไหม ครับ','Is it good?'],['B','อร่อย มาก ครับ เช็คบิล ครับ','Delicious. The bill, please.']] } },
+]},
+{ id:'u5', title:'Getting around', sub:'Where, directions, transport', lessons:[
+  { title:'Where is it?',
+    tip:['The question word sits where the answer goes', 'English moves "where" to the front. Thai leaves it in place: <b>hâwng-nám yùu thîi-nǎi</b> = toilet is-at where? Answer by swapping one word: <b>hâwng-nám yùu thîi-nân</b> = toilet is-at there.'],
+    items:[['ที่ไหน','where','🗺️'],['อยู่','to be at, to live'],['ห้องน้ำ อยู่ ที่ไหน ครับ','Where is the toilet?'],['โรงแรม','hotel'],['ร้านอาหาร','restaurant'],['ที่นี่','here'],['ที่นั่น','there'],['ผม อยู่ ที่ โรงแรม','I\'m at the hotel']],
+    mix:[['โรงแรม อยู่ ที่ไหน ครับ','Where is the hotel?'],['ร้านอาหาร อยู่ ที่นั่น','The restaurant is there'],['คุณ อยู่ ที่ไหน ครับ','Where are you?'],['อยู่ ที่นี่','It\'s here'],['ห้องน้ำ อยู่ ที่นั่น ครับ','The toilet is over there']] },
+  { title:'Go, left, right',
+    tip:['Your first tone pair', '<b>klâi</b> (falling, like a firm "no!") means near. <b>klai</b> (flat) means far. Same sounds, opposite meanings. This is why the app makes you listen before you read.'],
+    items:[['ไป','go','🚶'],['ไป ไหน ครับ','Where are you going?'],['ตรงไป','go straight'],['เลี้ยว ซ้าย','turn left','⬅️'],['เลี้ยว ขวา','turn right','➡️'],['จอด ที่นี่ ครับ','Stop here, please'],['ใกล้','near','📍'],['ไกล','far','🔭']],
+    mix:[['ไกล ไหม ครับ','Is it far?'],['ไม่ ไกล','not far'],['ใกล้ มาก','very near'],['ผม ไป โรงแรม','I\'m going to the hotel'],['เลี้ยว ซ้าย ที่นี่ ครับ','Turn left here'],['ผม อยาก ไป ห้องน้ำ','I want to go to the toilet']] },
+  { title:'Taxi, bike, airport',
+    tip:['Doubling softens', 'Saying a describing word twice makes it gentler: <b>cháa cháa</b> = nice and slow. Add <b>nàwy</b> (a bit) to turn any request into a polite one.'],
+    items:[['รถ','car, vehicle'],['แท็กซี่','taxi'],['จักรยาน','bicycle'],['สนามบิน','airport'],['ไป สนามบิน เท่าไหร่ ครับ','How much to the airport?'],['กี่ บาท ครับ','How many baht?'],['ถึง แล้ว','We\'ve arrived','🏁'],['ช้า ช้า หน่อย ครับ','Slowly, please']],
+    mix:[['มี แท็กซี่ ไหม ครับ','Is there a taxi?'],['ผม ชอบ จักรยาน','I like bicycles'],['ไป โรงแรม กี่ บาท ครับ','How many baht to the hotel?'],['รถ อยู่ ที่ไหน ครับ','Where is the car?'],['สนามบิน ไกล ไหม ครับ','Is the airport far?']],
+    dialogue:{ title:'Taking a taxi', lines:[['A','ไป ไหน ครับ','Where are you going?'],['B','ไป สนามบิน ครับ เท่าไหร่ ครับ','To the airport. How much?'],['A','สาม ร้อย บาท ครับ','Three hundred baht.'],['B','ได้ ครับ ไกล ไหม ครับ','OK. Is it far?'],['A','ไม่ ไกล ครับ','Not far.'],['A','ถึง แล้ว ครับ','We\'ve arrived.'],['B','จอด ที่นี่ ครับ ขอบคุณ ครับ','Stop here, please. Thank you.']] } },
+]},
+{ id:'u6', title:'Understanding and help', sub:'Keep a conversation alive', lessons:[
+  { title:'I don\'t understand',
+    tip:['The survival sentences', 'These four phrases let you keep talking when you get lost. Learn them until they come out without thinking. Remember: <b>dâi</b> at the end = can, <b>dâi mǎi</b> = could you?'],
+    items:[['เข้าใจ','understand'],['ไม่ เข้าใจ ครับ','I don\'t understand'],['พูด','speak'],['ภาษาไทย','Thai (language)'],['ภาษาอังกฤษ','English (language)'],['ผม พูด ภาษาไทย ได้ นิดหน่อย','I can speak a little Thai'],['พูด ช้า ช้า หน่อย ได้ ไหม ครับ','Could you speak slowly?'],['พูด อีกที ได้ ไหม ครับ','Can you say that again?']],
+    mix:[['คุณ พูด ภาษาอังกฤษ ได้ ไหม ครับ','Can you speak English?'],['เข้าใจ ไหม ครับ','Do you understand?'],['เข้าใจ แล้ว ครับ','I understand now'],['ผม พูด ภาษาไทย ไม่ ได้','I can\'t speak Thai'],['ผม ไม่ เข้าใจ ภาษาไทย','I don\'t understand Thai']] },
+  { title:'What is this called?',
+    tip:['Turn every Thai person into a teacher', '<b>an níi rîak wâa à-rai</b> = this one is called what? Point at anything and ask. It is the single most useful sentence for learning on the street.'],
+    items:[['รู้','know','🧠'],['ไม่ รู้','I don\'t know','🤷'],['นี่ อะไร ครับ','What is this?'],['อัน นี้ เรียก ว่า อะไร ครับ','What is this called?'],['แปล ว่า อะไร ครับ','What does it mean?'],['ช่วย ด้วย','Help!'],['ช่วย ผม หน่อย ได้ ไหม ครับ','Could you help me?']],
+    mix:[['คุณ รู้ ไหม ครับ','Do you know?'],['ผม ไม่ รู้ ครับ','I don\'t know'],['ผม รู้ แล้ว','I know now'],['ภาษาไทย เรียก ว่า อะไร ครับ','What is it called in Thai?']] },
+  { title:'When something is wrong',
+    tip:['Short is fine', 'In an emergency, single words work. <b>jèp thîi-nîi</b> (hurts here) while pointing says everything a doctor needs.'],
+    items:[['เจ็บ','hurt, pain'],['เจ็บ ที่นี่','It hurts here'],['ยา','medicine'],['โรงพยาบาล','hospital'],['หมอ','doctor'],['ผม อยาก ไป โรงพยาบาล','I want to go to the hospital'],['ระวัง','Careful!'],['เหนื่อย','tired']],
+    mix:[['มี ยา ไหม ครับ','Do you have medicine?'],['โรงพยาบาล อยู่ ที่ไหน ครับ','Where is the hospital?'],['เจ็บ มาก','It hurts a lot'],['ผม เหนื่อย มาก','I\'m very tired'],['เจ็บ ไหม ครับ','Does it hurt?'],['โรงพยาบาล ไกล ไหม ครับ','Is the hospital far?']],
+    dialogue:{ title:'Lost in conversation', lines:[['A','คุณ พูด ภาษาไทย ได้ ไหม ครับ','Can you speak Thai?'],['B','ได้ นิดหน่อย ครับ พูด ช้า ช้า หน่อย ได้ ไหม ครับ','A little. Could you speak slowly?'],['A','ได้ ครับ เข้าใจ ไหม ครับ','Sure. Do you understand?'],['B','เข้าใจ แล้ว ครับ อัน นี้ เรียก ว่า อะไร ครับ','I understand now. What is this called?'],['A','เรียก ว่า จักรยาน ครับ','It\'s called a bicycle.'],['B','ขอบคุณ ครับ','Thank you.']] } },
+]},
+{ id:'u7', title:'Time', sub:'Today, tomorrow, what time, not yet', lessons:[
+  { title:'Today and tomorrow',
+    tip:['No tenses', 'Thai verbs have no past or future form. A time word does the job: <b>mûea-waan phǒm pai</b> = yesterday I go = "I went". For plans, put <b>jà</b> before the verb.'],
+    items:[['วันนี้','today'],['พรุ่งนี้','tomorrow'],['เมื่อวาน','yesterday'],['ตอนนี้','now','⏰'],['จะ','will'],['พรุ่งนี้ ผม จะ ไป สนามบิน','Tomorrow I\'ll go to the airport'],['เมื่อวาน ผม ไป ร้านอาหาร','Yesterday I went to a restaurant']],
+    mix:[['วันนี้ ร้อน มาก','It\'s very hot today'],['พรุ่งนี้ คุณ จะ ไป ไหน ครับ','Where will you go tomorrow?'],['ตอนนี้ ผม หิว','I\'m hungry now'],['วันนี้ ผม ไม่ สบาย','I\'m not well today'],['ตอนนี้ คุณ อยู่ ที่ไหน ครับ','Where are you now?']] },
+  { title:'What time?',
+    tip:['Clock basics', 'For daytime hours say number + <b>moong</b>: <b>sìp moong</b> = 10 o\'clock. <b>kìi moong</b> = how many o\'clock = what time? Thai has more clock words for night hours; this is enough to start.'],
+    items:[['กี่ โมง ครับ','What time is it?'],['สิบ โมง','ten o\'clock'],['เมื่อไหร่','when'],['เปิด','open'],['ปิด','closed, to close'],['เปิด กี่ โมง ครับ','What time do you open?'],['ตอนเช้า','in the morning'],['ตอนเย็น','in the evening']],
+    mix:[['ปิด แล้ว','already closed'],['คุณ จะ ไป เมื่อไหร่ ครับ','When will you go?'],['ร้านอาหาร ปิด กี่ โมง ครับ','What time does the restaurant close?'],['พรุ่งนี้ ตอนเช้า','tomorrow morning'],['วันนี้ เปิด ไหม ครับ','Are you open today?'],['เปิด เก้า โมง','It opens at nine']] },
+  { title:'Wait, done, not yet',
+    tip:['"Have you eaten yet?"', '<b>kin khâao rǔe yang</b> is a common friendly greeting, not an invitation. Answer <b>kin láew</b> (eaten already) or <b>yang</b> (not yet). <b>… rǔe yang</b> works with any verb.'],
+    items:[['รอ แป๊บนึง ครับ','Wait a moment, please'],['ยัง ครับ','Not yet'],['เสร็จ แล้ว','Finished','✅'],['กิน ข้าว หรือ ยัง ครับ','Have you eaten yet?'],['เร็ว','fast'],['ห้า นาที','five minutes']],
+    mix:[['รอ ห้า นาที ครับ','Wait five minutes, please'],['เสร็จ หรือ ยัง ครับ','Is it finished yet?'],['กิน แล้ว ครับ','I\'ve eaten'],['ยัง ไม่ เสร็จ','not finished yet'],['เร็ว เร็ว หน่อย ครับ','A bit faster, please'],['ถึง หรือ ยัง ครับ','Have we arrived yet?']],
+    dialogue:{ title:'Lunch plans', lines:[['A','กิน ข้าว หรือ ยัง ครับ','Have you eaten yet?'],['B','ยัง ครับ ผม หิว มาก','Not yet. I\'m very hungry.'],['A','ไป ร้านอาหาร ไหม ครับ','Shall we go to a restaurant?'],['B','ไป ครับ เปิด หรือ ยัง ครับ','Let\'s go. Is it open yet?'],['A','เปิด แล้ว ครับ','It\'s open.'],['B','ดี มาก รอ แป๊บนึง ครับ','Great. Wait a moment, please.']] } },
+]},
+{ id:'u8', title:'People', sub:'Family, compliments, your life here', lessons:[
+  { title:'Family and friends',
+    tip:['Owner comes second', 'There is no "my" or "your". Put the owner after the thing: <b>phûean phǒm</b> = friend (of) me = my friend. To count people use <b>khon</b>: <b>sǎwng khon</b> = two people.'],
+    items:[['เพื่อน','friend'],['แฟน','partner, boyfriend/girlfriend'],['ลูก','child (son/daughter)'],['พ่อ','father'],['แม่','mother'],['นี่ เพื่อน ผม ครับ','This is my friend'],['กี่ คน ครับ','How many people?'],['สอง คน ครับ','Two people']],
+    mix:[['นี่ แฟน ผม ครับ','This is my partner'],['คุณ มี ลูก ไหม ครับ','Do you have children?'],['ผม มี ลูก สอง คน','I have two children'],['แม่ ผม สบายดี','My mother is well'],['เพื่อน คุณ ชื่อ อะไร ครับ','What\'s your friend\'s name?'],['พ่อ ผม ชอบ เบียร์','My father likes beer']] },
+  { title:'Saying nice things',
+    tip:['You will hear this a lot', 'Say three words of Thai and someone will tell you <b>phûut phaa-sǎa-thai kèng mâak</b> (you speak Thai so well). The modest reply is <b>nít-nàwy khráp</b> (just a little).'],
+    items:[['สวย','beautiful'],['ใจดี','kind'],['สนุก','fun'],['ใหญ่','big'],['เล็ก','small'],['เก่ง','skilled, good at something'],['คุณ ใจดี มาก ครับ','You\'re very kind'],['คุณ พูด ภาษาไทย เก่ง มาก','You speak Thai very well']],
+    mix:[['สนุก มาก','It\'s a lot of fun'],['สนุก ไหม ครับ','Is it fun?'],['โรงแรม ใหญ่ มาก','The hotel is very big'],['แฟน ผม ใจดี มาก','My partner is very kind'],['ขอ แก้ว เล็ก ครับ','A small glass, please'],['เพื่อน ผม เก่ง มาก','My friend is very good'],['สวย มาก','very beautiful']] },
+  { title:'Work and home',
+    tip:['Up to now', 'A time span + <b>láew</b> means "so far": <b>sǎwng pii láew</b> = two years already = "for two years now".'],
+    items:[['ทำงาน','work'],['คุณ ทำงาน อะไร ครับ','What work do you do?'],['บ้าน','home, house'],['กลับ บ้าน','go home','🏡'],['เมืองไทย','Thailand'],['ผม ชอบ เมืองไทย มาก','I like Thailand very much'],['ปี','year','🗓️'],['ผม อยู่ เมืองไทย สอง ปี แล้ว','I\'ve lived in Thailand for two years']],
+    mix:[['บ้าน คุณ อยู่ ที่ไหน ครับ','Where is your home?'],['ผม อยาก กลับ บ้าน','I want to go home'],['วันนี้ ผม ไม่ ทำงาน','I\'m not working today'],['พรุ่งนี้ ผม จะ กลับ บ้าน','Tomorrow I\'ll go home'],['คุณ อยู่ เมืองไทย กี่ ปี แล้ว ครับ','How many years have you lived in Thailand?'],['บ้าน ผม อยู่ ไกล','My home is far away']],
+    dialogue:{ title:'Small talk', lines:[['A','คุณ มา จาก ไหน ครับ','Where are you from?'],['B','ผม มา จาก ฝรั่งเศส ครับ','I\'m from France.'],['A','คุณ อยู่ เมืองไทย กี่ ปี แล้ว ครับ','How many years have you lived in Thailand?'],['B','สอง ปี แล้ว ครับ ผม ชอบ เมืองไทย มาก','Two years now. I like Thailand very much.'],['A','คุณ พูด ภาษาไทย เก่ง มาก','You speak Thai very well.'],['B','นิดหน่อย ครับ ขอบคุณ ครับ คุณ ใจดี มาก ครับ','Just a little. Thank you, you\'re very kind.']] } },
+]},
+{ id:'u9', title:'Shopping and hotels', sub:'Buy, compare, check in', lessons:[
+  { title:'Buying and paying',
+    tip:['Stack what you know', '<b>jàai bàt dâi mǎi</b> = pay card can + question = "can I pay by card?". Nothing new here except two words. Most new sentences from now on are old patterns with new words.'],
+    items:[['ซื้อ','buy'],['ตลาด','market'],['ผม อยาก ซื้อ อัน นี้','I want to buy this one'],['จ่าย','pay','💰'],['บัตร','card'],['จ่าย บัตร ได้ ไหม ครับ','Can I pay by card?'],['เงินสด','cash'],['ไม่ เอา ถุง ครับ','No bag, thanks','🛍️']],
+    mix:[['ตลาด อยู่ ที่ไหน ครับ','Where is the market?'],['ผม จะ ไป ตลาด','I\'m going to the market'],['จ่าย เงินสด ครับ','I\'ll pay cash'],['คุณ อยาก ซื้อ อะไร ครับ','What do you want to buy?'],['ตลาด เปิด กี่ โมง ครับ','What time does the market open?'],['ผม ไม่ มี เงินสด','I don\'t have cash']] },
+  { title:'Colours and comparing',
+    tip:['kwàa = "-er"', 'Add <b>kwàa</b> after a describing word to compare: <b>yài kwàa</b> = bigger, <b>thùuk kwàa</b> = cheaper. And listen for the tone: <b>khǎao</b> (rising) is white, <b>khâao</b> (falling) is rice.'],
+    items:[['สี แดง','red','🔴'],['สี ดำ','black','⚫'],['สี ขาว','white','⚪'],['ใหญ่ กว่า','bigger'],['มี ใหญ่ กว่า นี้ ไหม ครับ','Do you have a bigger one?'],['ลอง ได้ ไหม ครับ','Can I try it?'],['มี สี อื่น ไหม ครับ','Do you have another colour?']],
+    mix:[['เล็ก กว่า','smaller'],['ถูก กว่า','cheaper'],['มี ถูก กว่า นี้ ไหม ครับ','Do you have a cheaper one?'],['เอา สี ดำ ครับ','I\'ll take the black one'],['ผม ชอบ สี แดง','I like red'],['อัน นี้ ดี กว่า','This one is better'],['มี สี ขาว ไหม ครับ','Do you have it in white?']] },
+  { title:'At the hotel',
+    tip:['lá = per', '<b>khuen lá thâo-rài</b> = night per how-much = "how much per night?". The same <b>lá</b> works for per person: <b>khon lá</b>.'],
+    items:[['ห้อง','room'],['มี ห้อง ว่าง ไหม ครับ','Do you have a room free?'],['สอง คืน','two nights','🌙'],['คืน ละ เท่าไหร่ ครับ','How much per night?'],['ผม จอง ห้อง แล้ว','I\'ve booked a room'],['แอร์','air-con'],['กุญแจ','key']],
+    mix:[['มี แอร์ ไหม ครับ','Is there air-con?'],['ห้อง ใหญ่ มาก','The room is very big'],['ขอ กุญแจ ครับ','The key, please'],['ไม่ มี น้ำ ร้อน','There\'s no hot water'],['ผม จะ อยู่ สาม คืน','I\'ll stay three nights'],['ห้อง นี้ ดี มาก','This room is very good'],['คืน ละ ห้า ร้อย บาท','five hundred baht per night']],
+    dialogue:{ title:'Checking in', lines:[['B','สวัสดี ครับ มี ห้อง ว่าง ไหม ครับ','Hello, do you have a room free?'],['A','มี ครับ กี่ คืน ครับ','We do. How many nights?'],['B','สอง คืน ครับ คืน ละ เท่าไหร่ ครับ','Two nights. How much per night?'],['A','คืน ละ แปด ร้อย บาท ครับ','Eight hundred baht per night.'],['B','มี แอร์ ไหม ครับ','Is there air-con?'],['A','มี ครับ','There is.'],['B','ดี ครับ จ่าย บัตร ได้ ไหม ครับ','Good. Can I pay by card?'],['A','ได้ ครับ','You can.']] } },
+]},
+{ id:'u10', title:'Real conversation', sub:'Opinions, reasons, goodbyes', lessons:[
+  { title:'What I think',
+    tip:['Opinions', '<b>phǒm khít wâa</b> = I think that… Put any sentence you already know after it. <b>wâa</b> is the same "that / saying" you met in "what is this called".'],
+    items:[['ผม คิด ว่า','I think that…','💭'],['จริง','true, real'],['จริง หรือ ครับ','Really?','😮'],['แน่นอน','of course'],['อาจจะ','maybe'],['ผม รัก เมืองไทย','I love Thailand'],['มีความสุข','happy'],['เสียใจ ด้วย ครับ','I\'m sorry to hear that']],
+    mix:[['ผม คิด ว่า แพง มาก','I think it\'s very expensive'],['ผม คิด ว่า ไม่ ไกล','I think it\'s not far'],['ไม่ จริง','That\'s not true'],['คุณ คิด ว่า ดี ไหม ครับ','Do you think it\'s good?'],['อาจจะ พรุ่งนี้','maybe tomorrow'],['ผม มีความสุข มาก','I\'m very happy']] },
+  { title:'Why, because, but',
+    tip:['Joining ideas', 'With <b>tàe</b> (but), <b>phráw wâa</b> (because) and <b>kàp</b> (with) you can chain your short sentences into real speech. Say two things you know and put one of these between them.'],
+    items:[['ทำไม','why'],['เพราะ ว่า','because'],['แต่','but'],['กับ','with, and'],['ไป ด้วยกัน ไหม ครับ','Shall we go together?'],['ผม ชอบ แต่ แพง มาก','I like it, but it\'s very expensive'],['ผม ไป กับ เพื่อน','I\'m going with a friend'],['คน ไทย','Thai people']],
+    mix:[['ทำไม ไม่ ไป ครับ','Why aren\'t you going?'],['เพราะ ว่า ผม เหนื่อย','Because I\'m tired'],['อร่อย แต่ เผ็ด มาก','Delicious but very spicy'],['ขอ ข้าว กับ ไก่ ครับ','Rice with chicken, please'],['ผม อยาก ไป แต่ ไม่ มี รถ','I want to go but I have no car'],['ทำไม คุณ ชอบ เมืองไทย ครับ','Why do you like Thailand?'],['เพราะ ว่า คน ไทย ใจดี','Because Thai people are kind']] },
+  { title:'Goodbyes',
+    tip:['Leaving well', 'Thais announce they are leaving: <b>pai kàwn ná</b> = going first, okay? The little <b>ná</b> makes anything softer and warmer.'],
+    items:[['ไป ก่อน นะ ครับ','I\'m off now','👋'],['แล้ว เจอ กัน ครับ','See you later'],['โชคดี ครับ','Good luck'],['ยินดี ครับ','You\'re welcome'],['เช่นกัน ครับ','Likewise, you too'],['เดินทาง ปลอดภัย นะ ครับ','Have a safe trip','🧳'],['ฝันดี ครับ','Sweet dreams']],
+    mix:[['พรุ่งนี้ เจอ กัน ครับ','See you tomorrow'],['เจอ กัน ที่ โรงแรม','See you at the hotel'],['เจอ กัน กี่ โมง ครับ','What time shall we meet?'],['เจอ กัน ตอนเย็น','See you this evening'],['ขอบคุณ มาก ครับ โชคดี ครับ','Thank you very much. Good luck.']],
+    dialogue:{ title:'Making plans', lines:[['A','พรุ่งนี้ คุณ จะ ไป ไหน ครับ','Where are you going tomorrow?'],['B','ผม จะ ไป ตลาด กับ เพื่อน ไป ด้วยกัน ไหม ครับ','I\'m going to the market with a friend. Shall we go together?'],['A','อยาก ไป แต่ พรุ่งนี้ ผม ทำงาน','I\'d like to, but I work tomorrow.'],['B','เสียใจ ด้วย ครับ','I\'m sorry to hear that.'],['A','ไม่เป็นไร ครับ ไป ก่อน นะ ครับ','No problem. I\'m off now.'],['B','โชคดี ครับ แล้ว เจอ กัน ครับ','Good luck. See you later.']] } },
+]},
+];
+
+/* Phûut Thai — app engine. Vanilla JS, no dependencies. */
+(() => {
+'use strict';
+
+/* ---------- tiny helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const h = (tag, attrs, ...kids) => {
+  const e = document.createElement(tag);
+  for (const k in attrs || {}) {
+    const v = attrs[k];
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k === 'html') e.innerHTML = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat()) if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(c));
+  return e;
+};
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pick = (a, n) => shuffle(a).slice(0, n);
+const today = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const addDays = n => { const d = new Date(); d.setDate(d.getDate() + n); return today(d); };
+const I = {
+  speaker: '<path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  slow: '<path d="M3 15a6 6 0 0 1 12 0v1H3v-1z" fill="currentColor"/><path d="M15 15h3.5a2.5 2.5 0 0 0 0-5H17M6 16v3M12 16v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+  gear: '<circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
+  flame: '<path d="M12 2c1 4 5 5.5 5 10.5A5 5 0 0 1 7 12.500c0-2 1-3 1.500-4.500C10 9.500 12 7 12 2z" fill="currentColor"/>',
+  chev: '<path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+  path: '<path d="M5 20c0-6 14-4 14-10a4 4 0 0 0-8 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="5" cy="20" r="2" fill="currentColor"/>',
+  loop: '<path d="M4 12a8 8 0 0 1 14-5.300M20 12a8 8 0 0 1-14 5.300" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 3v4h-4M6 21v-4h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+  book: '<path d="M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 9h5M9 13h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  play: '<path d="M8 5v14l11-7z" fill="currentColor"/>',
+  pause: '<rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/>',
+  next: '<path d="M6 5v14l9-7zM17 5v14" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+};
+const icon = n => h('span', { html: `<svg viewBox="0 0 24 24" aria-hidden="true">${I[n]}</svg>` }).firstChild;
+
+/* ---------- state ---------- */
+const KEY = 'phuut.v1';
+const def = () => ({ gender: null, rate: 0.9, voice: '', showThai: true, xp: 0, streak: 0, lastDay: '', day: '', dayXp: 0, goal: 40, done: {}, srs: {}, hist: {}, onboarded: false });
+let S = def();
+try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+if (S.day !== today()) { S.day = today(); S.dayXp = 0; }
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist().catch(() => {}); } catch (e) {}
+
+/* ---------- content model ---------- */
+const LEXMAP = {};
+LEX.trim().split('\n').forEach(l => { const [th, rom, gl, em] = l.split('|'); LEXMAP[th] = { th, rom, gl, em }; });
+const QWORDS = new Set(['ไหม', 'อะไร', 'ไหน', 'ที่ไหน', 'เท่าไหร่', 'กี่', 'เมื่อไหร่', 'ทำไม', 'หรือ', 'ล่ะ']);
+// Female speakers: ผม → ฉัน, ครับ → ค่ะ (statement) / คะ (question or after นะ)
+function gendered(base) {
+  if (S.gender !== 'f') return base;
+  let q = false;
+  return base.map((t, i) => {
+    if (t === 'ผม') return 'ฉัน';
+    if (QWORDS.has(t)) q = true;
+    if (t === 'ครับ') { const r = (q || base[i - 1] === 'นะ') ? 'คะ' : 'ค่ะ'; q = false; return r; }
+    return t;
+  });
+}
+const PARTICLES = new Set(['ครับ', 'ค่ะ', 'คะ']);
+const mk = (th, en, em) => { const base = th.split(' '); return { key: th, base, en, em: em || (base.length === 1 ? LEXMAP[base[0]].em : null), multi: base.length > 1 }; };
+const toks = it => gendered(it.base);
+const romOf = it => toks(it).map(t => LEXMAP[t].rom).join(' ');
+const thaiOf = it => toks(it).join('');
+const sayText = it => toks(it).map((t, i, a) => PARTICLES.has(t) && i < a.length - 1 ? t + ' ' : t).join('');
+
+const LESSONS = [];
+const REG = {};
+COURSE.forEach((u, ui) => u.lessons.forEach((L, li) => {
+  const lesson = { id: u.id + '.' + (li + 1), unit: u, ui, li, title: L.title, tip: L.tip, idx: LESSONS.length,
+    items: L.items.map(a => mk(...a)), mix: (L.mix || []).map(a => mk(...a)),
+    dialogue: L.dialogue && { title: L.dialogue.title, lines: L.dialogue.lines.map(([who, th, en]) => ({ who, it: mk(th, en) })) } };
+  [...lesson.items, ...lesson.mix].forEach(it => { if (!REG[it.key]) { it.lesson = lesson.idx; REG[it.key] = it; } });
+  lesson.items = lesson.items.map(it => REG[it.key]); lesson.mix = lesson.mix.map(it => REG[it.key]);
+  LESSONS.push(lesson);
+}));
+const nextLesson = () => LESSONS.find(l => !S.done[l.id]) || LESSONS[LESSONS.length - 1];
+const poolUpTo = idx => Object.values(REG).filter(it => it.lesson <= idx);
+const learned = () => Object.keys(S.srs).map(k => REG[k]).filter(Boolean);
+const dueItems = () => learned().filter(it => S.srs[it.key].due <= today());
+
+/* ---------- romanization with tone colours ---------- */
+function toneOf(syl) {
+  if (/[àèìòù]/.test(syl)) return 'low';
+  if (/[âêîôû]/.test(syl)) return 'fall';
+  if (/[áéíóú]/.test(syl)) return 'high';
+  if (/[ǎěǐǒǔ]/.test(syl)) return 'rise';
+  return 'mid';
+}
+function romEl(text, cls) {
+  const e = h('span', { class: 'rom ' + (cls || '') });
+  text.split(' ').forEach((w, i) => {
+    if (i) e.append(' ');
+    w.split('-').forEach((s, j) => { if (j) e.append(h('span', { class: 'hy' }, '·')); e.append(h('span', { class: toneOf(s) }, s)); });
+  });
+  return e;
+}
+
+/* ---------- speech out ---------- */
+const TTS = {
+  ok: 'speechSynthesis' in window, voices: [], unlocked: false,
+  init() {
+    if (!this.ok) return;
+    const load = () => { this.voices = speechSynthesis.getVoices() || []; };
+    load(); try { speechSynthesis.addEventListener('voiceschanged', load); } catch (e) {}
+  },
+  thaiVoices() { return this.voices.filter(v => /^th([-_]|$)/i.test(v.lang)); },
+  status() { return !this.ok ? 'none' : (this.voices.length && !this.thaiVoices().length ? 'novoice' : 'ok'); },
+  voiceFor(lang) {
+    if (lang === 'th-TH') {
+      const th = this.thaiVoices();
+      return th.find(v => v.voiceURI === S.voice) || th.find(v => /premium|enhanced|natural|google/i.test(v.name)) || th[0] || null;
+    }
+    const en = this.voices.filter(v => /^en/i.test(v.lang));
+    return en.find(v => /en[-_]US/i.test(v.lang) && v.localService) || en[0] || null;
+  },
+  unlock() { if (this.ok && !this.unlocked) { this.unlocked = true; try { speechSynthesis.speak(new SpeechSynthesisUtterance('')); } catch (e) {} } },
+  stop() { this.token = {}; if (this.ok) try { speechSynthesis.cancel(); } catch (e) {} },
+  speak(text, { lang = 'th-TH', rate = 1 } = {}) {
+    return new Promise(res => {
+      if (!this.ok) return res(false);
+      const token = this.token = {};
+      try { speechSynthesis.cancel(); } catch (e) {}
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = lang; const v = this.voiceFor(lang); if (v) try { u.voice = v; } catch (e) {}
+      u.rate = Math.max(0.4, Math.min(1.3, rate * (lang === 'th-TH' ? S.rate : 1)));
+      let fin = false;
+      const done = ok => { if (fin) return; fin = true; clearTimeout(t); res(ok && this.token === token); };
+      u.onend = () => done(true); u.onerror = () => done(false);
+      const t = setTimeout(() => done(false), 3000 + text.length * 450);
+      this._u = u; // keep a reference: some browsers drop the end event otherwise
+      setTimeout(() => { if (this.token === token) try { speechSynthesis.speak(u); } catch (e) { done(false); } else done(false); }, 70);
+    });
+  },
+};
+TTS.init();
+const say = (it, slow) => TTS.speak(sayText(it), { rate: slow ? 0.6 : 1 });
+const sayWord = t => TTS.speak(t, { rate: 0.9 });
+
+/* ---------- speech in ---------- */
+const SRClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+let micBlocked = false, activeRec = null;
+function hear() {
+  return new Promise(res => {
+    let got = false; const out = v => { if (!got) { got = true; activeRec = null; res(v); } };
+    try {
+      const r = activeRec = new SRClass();
+      r.lang = 'th-TH'; r.maxAlternatives = 5; r.interimResults = false;
+      r.onresult = e => out({ alts: Array.from(e.results[0]).map(a => a.transcript) });
+      r.onerror = e => { if (/not-allowed|service-not-allowed|audio-capture/.test(e.error)) micBlocked = true; out({ error: e.error }); };
+      r.onend = () => out({ error: 'no-speech' });
+      r.start();
+      setTimeout(() => { try { r.stop(); } catch (e) {} }, 9000);
+    } catch (e) { micBlocked = true; out({ error: 'unavailable' }); }
+  });
+}
+const norm = s => s.replace(/[^฀-๿]/g, '').replace(/ครับ|ค่ะ|คะ|ค่า|คับ|ค้าบ/g, '');
+function lev(a, b) {
+  const m = a.length, n = b.length; if (!m || !n) return Math.max(m, n);
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) { const cur = [i]; for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = cur; }
+  return prev[n];
+}
+function matches(it, alts) {
+  const target = norm(thaiOf(it)) || thaiOf(it);
+  return alts.some(a => { const x = norm(a) || a.replace(/\s/g, ''); return x && (1 - lev(x, target) / Math.max(x.length, target.length)) >= 0.7; });
+}
+
+/* ---------- sound effects ---------- */
+let AC;
+function blip(ok) {
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const t = AC.currentTime;
+    (ok ? [660, 880] : [220, 180]).forEach((f, i) => {
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type = ok ? 'sine' : 'triangle'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t + i * 0.09); g.gain.exponentialRampToValueAtTime(0.12, t + i * 0.09 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.09 + 0.16);
+      o.connect(g).connect(AC.destination); o.start(t + i * 0.09); o.stop(t + i * 0.09 + 0.18);
+    });
+  } catch (e) {}
+}
+
+/* ---------- progress & spaced repetition ---------- */
+const GAPS = [0, 1, 2, 4, 8, 16, 32, 64];
+function grade(it, ok) {
+  const r = S.srs[it.key] || (S.srs[it.key] = { box: 0, due: today() });
+  r.box = ok ? Math.min(GAPS.length - 1, r.box + 1) : Math.max(0, r.box - 2);
+  r.due = addDays(GAPS[r.box]);
+}
+function addXp(n) {
+  if (S.day !== today()) { S.day = today(); S.dayXp = 0; }
+  S.xp += n; S.dayXp += n;
+  S.hist[today()] = S.dayXp; Object.keys(S.hist).sort().slice(0, -90).forEach(k => delete S.hist[k]);
+  if (S.lastDay !== today()) { S.streak = S.lastDay === addDays(-1) ? S.streak + 1 : 1; S.lastDay = today(); }
+}
+const liveStreak = () => (S.lastDay === today() || S.lastDay === addDays(-1)) ? S.streak : 0;
+
+/* ---------- shell ---------- */
+const app = $('#app');
+let tab = 'learn', sess = null, player = null;
+function mount(...nodes) { TTS.stop(); app.className = S.showThai ? '' : 'no-thai'; app.replaceChildren(...nodes.flat().filter(Boolean)); }
+document.addEventListener('pointerdown', () => TTS.unlock(), { once: true });
+
+function playBtns(it, { small } = {}) {
+  const b = h('button', { class: 'pbtn' + (small ? ' sm' : ''), 'aria-label': 'Play', onclick: async () => { b.classList.add('speaking'); await say(it); b.classList.remove('speaking'); } }, icon('speaker'));
+  const s = h('button', { class: 'pbtn sm', 'aria-label': 'Play slowly', onclick: () => say(it, true) }, icon('slow'));
+  return h('div', { class: 'play' }, b, s);
+}
+function wordChips(it) {
+  return h('div', { class: 'words' }, toks(it).map(t => h('button', { class: 'word', onclick: () => sayWord(t) }, romEl(LEXMAP[t].rom), h('small', {}, LEXMAP[t].gl))));
+}
+
+/* ---------- home ---------- */
+function topBar() {
+  return h('div', { class: 'top' },
+    h('div', { class: 'logo', html: 'Ph<i>û</i>ut Thai' }),
+    h('div', { class: 'chip', title: 'Day streak' }, icon('flame'), String(liveStreak())),
+    h('button', { class: 'iconbtn', 'aria-label': 'Settings', onclick: openSettings }, icon('gear')));
+}
+function navBar() {
+  const b = (id, label, ic) => h('button', { 'aria-current': tab === id ? 'page' : null, onclick: () => { tab = id; home(); } }, icon(ic), label);
+  return h('nav', { class: 'nav' }, b('learn', 'Learn', 'path'), b('practice', 'Practice', 'loop'), b('words', 'Words', 'book'));
+}
+function voiceNote() {
+  const st = TTS.status();
+  if (st === 'ok') return null;
+  return h('div', { class: 'note' }, h('b', {}, st === 'none' ? 'This browser cannot speak' : 'No Thai voice on this device'),
+    h('span', {}, st === 'none' ? 'Open the app in Safari (iPhone) or Chrome (Android) to hear Thai.' :
+      'iPhone: Settings → Accessibility → Spoken Content → Voices → Thai. Android: Settings → Text-to-speech → install Thai voice data. Then reload.'));
+}
+function home() {
+  const scroll = h('div', { class: 'scroll' });
+  if (tab === 'learn') renderLearn(scroll); else if (tab === 'practice') renderPractice(scroll); else renderWords(scroll);
+  mount(topBar(), scroll, navBar());
+}
+function renderLearn(root) {
+  const nx = nextLesson(), due = dueItems().length, allDone = LESSONS.every(l => S.done[l.id]);
+  const warm = Math.min(due, 6), goalMet = S.dayXp >= S.goal;
+  root.append(voiceNote() || '');
+  root.append(h('div', { class: 'hero' },
+    h('div', { class: 'eyebrow' }, allDone ? 'Course complete' : (goalMet ? 'Goal reached today' : 'Today\'s session')),
+    h('h2', {}, allDone ? 'Keep it alive with reviews' : nx.title),
+    h('p', {}, allDone ? 'Every word comes back just before you would forget it.' : (warm ? `${warm} quick ${warm === 1 ? 'review' : 'reviews'}, then ` : '') + `Unit ${nx.ui + 1} · Lesson ${nx.li + 1}. About ${warm ? 8 : 6} minutes.`),
+    h('button', { class: 'btn', onclick: () => allDone ? startReview() : startToday(nx) }, allDone ? 'Review now' : (nx.idx === 0 && !S.xp ? 'Start first lesson' : (goalMet ? 'Do one more' : 'Start')))));
+  const week = h('div', { class: 'week' });
+  for (let d = 6; d >= 0; d--) { const k = addDays(-d), dt = new Date(); dt.setDate(dt.getDate() - d); const xp = S.hist[k] || 0;
+    week.append(h('div', { class: 'day' + (xp >= S.goal ? ' full' : xp ? ' some' : '') + (d ? '' : ' now') }, h('i', {}, xp >= S.goal ? icon('check') : ''), h('span', {}, 'SMTWTFS'[dt.getDay()]))); }
+  root.append(h('div', { class: 'goal' },
+    h('div', { class: 'line' }, h('span', {}, 'Today'), h('span', {}, `${Math.min(S.dayXp, S.goal)} / ${S.goal} XP`)),
+    h('div', { class: 'bar' }, h('i', { style: `width:${Math.min(100, S.dayXp / S.goal * 100)}%` })), week));
+  if (due > warm && !allDone) root.append(h('button', { class: 'btn ghost', onclick: startReview }, icon('loop'), `Review all ${due} due items`));
+  COURSE.forEach((u, ui) => {
+    const box = h('section', { class: 'unit' }, h('div', { class: 'unit-h' }, h('span', { class: 'n' }, 'Unit ' + (ui + 1)), h('h3', {}, u.title)), h('p', {}, u.sub));
+    LESSONS.filter(l => l.ui === ui).forEach(l => {
+      const st = S.done[l.id] ? 'is-done' : (l === nx ? 'next' : '');
+      box.append(h('button', { class: 'lesson ' + st, onclick: () => startLesson(l) },
+        h('span', { class: 'dot' }, st === 'is-done' ? icon('check') : String(l.li + 1)),
+        h('span', { class: 't' }, h('b', {}, l.title), h('span', {}, l.items.slice(0, 4).map(i => i.en).join(', '))),
+        icon('chev')));
+    });
+    root.append(box);
+  });
+}
+function renderPractice(root) {
+  const L = learned(), due = dueItems().length;
+  if (!L.length) { root.append(h('div', { class: 'card' }, h('h3', {}, 'Nothing to practise yet'), h('p', {}, 'Finish your first lesson and everything you learn shows up here for review, hands-free listening and speaking drills.'), h('button', { class: 'btn', onclick: () => startLesson(nextLesson()) }, 'Start first lesson'))); return; }
+  root.append(h('div', { class: 'card' }, h('div', { class: 'eyebrow' }, 'Spaced repetition'), h('h3', {}, due ? `${due} ${due === 1 ? 'item is' : 'items are'} ready for review` : 'All caught up'),
+    h('p', {}, 'Each word returns after 1, 2, 4, 8, 16… days, right before you would forget it. Miss it and it comes back sooner.'),
+    h('button', { class: 'btn', onclick: startReview }, due ? 'Review now' : 'Practise anyway')));
+  root.append(h('div', { class: 'card' }, h('div', { class: 'eyebrow' }, 'Hands-free'), h('h3', {}, 'Listen and repeat'),
+    h('p', {}, 'English prompt, a pause for you to answer out loud, then the Thai twice. For walks, rides and washing up.'),
+    h('button', { class: 'btn ghost', onclick: () => startPlayer(L) }, icon('play'), 'Start listening')));
+  root.append(h('div', { class: 'card' }, h('div', { class: 'eyebrow' }, 'Speaking'), h('h3', {}, 'Say it drill'),
+    h('p', {}, 'Ten prompts, speaking only. Recall is what makes words stick.'),
+    h('button', { class: 'btn ghost', onclick: () => startSession(pick(L, 10).map(it => ({ t: 'speak', it })), { title: 'Speaking drill' }) }, icon('mic'), 'Start drill')));
+  const dl = LESSONS.filter(l => l.dialogue && S.done[l.id]);
+  if (dl.length) root.append(h('div', { class: 'card' }, h('div', { class: 'eyebrow' }, 'Conversations'), h('h3', {}, 'Replay a dialogue'),
+    dl.map(l => h('button', { class: 'btn ghost', onclick: () => startSession([{ t: 'dialogue', d: l.dialogue }], { title: l.dialogue.title }) }, l.dialogue.title))));
+}
+function renderWords(root) {
+  const L = learned().sort((a, b) => a.lesson - b.lesson);
+  if (!L.length) { root.append(h('div', { class: 'card' }, h('h3', {}, 'Your phrasebook is empty'), h('p', {}, 'Words and phrases you learn are collected here. Tap any of them to hear it again.'))); return; }
+  const list = h('div', { style: 'display:flex;flex-direction:column;gap:8px' });
+  const draw = q => {
+    q = q.trim().toLowerCase();
+    const plain = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    list.replaceChildren(...L.filter(it => !q || it.en.toLowerCase().includes(q) || plain(romOf(it)).includes(plain(q))).map(it => {
+      const box = S.srs[it.key].box;
+      return h('button', { class: 'wrow', onclick: () => say(it) }, icon('speaker'),
+        h('span', { class: 't' }, romEl(romOf(it)), h('small', {}, it.en), h('small', { class: 'thai' }, thaiOf(it))),
+        h('span', { class: 'lvl', title: 'Memory strength' }, [1, 3, 5].map(n => h('i', { class: box >= n ? 'on' : '' }))));
+    }));
+  };
+  root.append(h('input', { class: 'search', id: 'word-search', type: 'search', placeholder: `Search ${L.length} words and phrases`, 'aria-label': 'Search', oninput: e => draw(e.target.value) }), list);
+  draw('');
+}
+
+/* ---------- settings ---------- */
+function sheet(...kids) {
+  const bg = h('div', { class: 'sheet-bg', onclick: e => { if (e.target === bg) bg.remove(); } }, h('div', { class: 'sheet' }, kids));
+  document.body.append(bg); return bg;
+}
+function seg(opts, cur, on) {
+  const el = h('div', { class: 'seg' });
+  opts.forEach(([v, label]) => el.append(h('button', { 'aria-pressed': String(v === cur), onclick: () => { [...el.children].forEach(c => c.setAttribute('aria-pressed', 'false')); el.children[opts.findIndex(o => o[0] === v)].setAttribute('aria-pressed', 'true'); on(v); } }, label)));
+  return el;
+}
+function openSettings() {
+  const th = TTS.thaiVoices();
+  let armed = false;
+  const reset = h('button', { class: 'btn bad', onclick: () => { if (!armed) { armed = true; reset.textContent = 'Tap again to erase all progress'; return; } S = def(); save(); bg.remove(); start(); } }, 'Reset progress');
+  const code = h('textarea', { id: 'backup-code', class: 'code', rows: '3', spellcheck: 'false', 'aria-label': 'Backup code' });
+  const pack = () => btoa(unescape(encodeURIComponent(JSON.stringify(S))));
+  code.value = pack();
+  const copy = h('button', { class: 'btn ghost', onclick: async () => { code.value = pack(); code.select(); let ok = false; try { await navigator.clipboard.writeText(code.value); ok = true; } catch (e) { try { ok = document.execCommand('copy'); } catch (e2) {} } copy.textContent = ok ? 'Copied' : 'Select and copy'; } }, 'Copy code');
+  const restore = h('button', { class: 'btn ghost', onclick: () => { try { const o = JSON.parse(decodeURIComponent(escape(atob(code.value.trim())))); if (!o || typeof o.srs !== 'object' || typeof o.xp !== 'number') throw 0; S = Object.assign(def(), o); save(); bg.remove(); start(); } catch (e) { restore.textContent = 'Not a valid code'; } } }, 'Restore');
+  const bg = sheet(
+    h('h2', {}, 'Settings'),
+    h('div', { class: 'field' }, 'I speak as a', seg([['m', 'Man (khráp)'], ['f', 'Woman (khâ)']], S.gender, v => { S.gender = v; save(); })),
+    h('label', { class: 'field', for: 'set-rate' }, 'Thai speech speed', h('input', { id: 'set-rate', type: 'range', min: '0.6', max: '1.1', step: '0.05', value: String(S.rate), onchange: e => { S.rate = +e.target.value; save(); TTS.speak('สวัสดี สบายดีไหม'); } })),
+    th.length > 1 ? h('label', { class: 'field', for: 'set-voice' }, 'Thai voice', h('select', { id: 'set-voice', onchange: e => { S.voice = e.target.value; save(); TTS.speak('สวัสดี สบายดีไหม'); } }, th.map(v => h('option', { value: v.voiceURI, selected: v.voiceURI === (TTS.voiceFor('th-TH') || {}).voiceURI }, v.name)))) : null,
+    h('div', { class: 'field' }, 'Thai script under the romanization', seg([[true, 'Show'], [false, 'Hide']], S.showThai, v => { S.showThai = v; save(); app.className = v ? '' : 'no-thai'; })),
+    h('div', { class: 'field' }, 'Daily goal', seg([[20, 'Light'], [40, 'Regular'], [80, 'Serious']], S.goal, v => { S.goal = v; save(); })),
+    h('button', { class: 'btn ghost', onclick: () => { bg.remove(); startSession([{ t: 'tones' }], { title: 'Tones', free: true }); } }, 'How tones work'),
+    h('label', { class: 'field', for: 'backup-code' }, 'Backup code. Copy it somewhere safe, or paste one here to restore.', code),
+    h('div', { class: 'row' }, copy, restore),
+    reset,
+    h('button', { class: 'btn', onclick: () => { bg.remove(); if (!sess && !player) home(); } }, 'Done'));
+}
+
+/* ---------- onboarding ---------- */
+function onboard() {
+  const stage = h('div', { class: 'stage' }), foot = h('div', { class: 'foot' });
+  mount(h('div', { class: 'top' }, h('div', { class: 'logo', html: 'Ph<i>û</i>ut Thai' })), stage, foot);
+  const s1 = () => {
+    stage.replaceChildren(h('h2', { class: 'enter' }, h('small', {}, 'Welcome'), 'Speak and understand Thai. No alphabet needed.'),
+      h('div', { class: 'card' }, h('p', { html: '<b>Listen first.</b> You hear every word before you read it, so your ear learns the tones.' }),
+        h('p', { html: '<b>Say it out loud.</b> Recalling and speaking is what moves words into long-term memory.' }),
+        h('p', { html: '<b>Build, don\'t memorise.</b> Thai grammar is a handful of patterns. You snap known words together into new sentences.' }),
+        h('p', { html: '<b>Come back tomorrow.</b> Ten minutes a day, and reviews timed just before you forget.' })));
+    foot.replaceChildren(h('button', { class: 'btn', onclick: s2 }, 'Continue'));
+  };
+  const s2 = () => {
+    const go = h('button', { class: 'btn', disabled: !S.gender, onclick: s3 }, 'Continue');
+    stage.replaceChildren(h('h2', { class: 'enter' }, h('small', {}, 'One question'), 'How should you speak?'),
+      h('p', { class: 'center', style: 'text-align:left' }, 'Thai polite words and the word for "I" depend on the speaker. The lessons will teach you your own forms.'),
+      h('div', { class: 'opts two' }, [['m', 'As a man', 'phǒm · khráp'], ['f', 'As a woman', 'chǎn · khâ']].map(([v, a, b]) => {
+        const o = h('button', { class: 'opt' + (S.gender === v ? ' sel' : ''), onclick: () => { S.gender = v; save(); [...o.parentNode.children].forEach(c => c.classList.remove('sel')); o.classList.add('sel'); go.disabled = false; } }, h('span', {}, a), romEl(b));
+        return o;
+      })));
+    foot.replaceChildren(go);
+  };
+  const s3 = () => {
+    const hello = mk('สวัสดี ครับ', 'Hello');
+    stage.replaceChildren(h('h2', { class: 'enter' }, h('small', {}, 'Sound check'), 'Tap to hear your first Thai word'),
+      h('div', { class: 'learn' }, playBtns(hello), romEl(romOf(hello)), h('div', { class: 'en' }, 'Hello'), h('div', { class: 'hint' }, 'The turtle plays it slowly.')),
+      voiceNote() || h('p', { class: 'center' }, 'No sound? Turn off silent mode and raise the volume. Thai voice setup help appears on the home screen if your device has no Thai voice.'));
+    foot.replaceChildren(h('button', { class: 'btn', onclick: () => { S.onboarded = true; save(); startLesson(LESSONS[0]); } }, 'Start lesson 1'),
+      h('button', { class: 'link', onclick: () => { S.onboarded = true; save(); home(); } }, 'Look around first'));
+  };
+  s1();
+}
+
+/* ---------- session building ---------- */
+function buildLesson(L) {
+  const steps = [];
+  if (L.idx === 0 && !S.done[L.id]) steps.push({ t: 'tones' });
+  if (L.tip) steps.push({ t: 'tip', tip: L.tip });
+  for (let g = 0; g < L.items.length; g += 3) {
+    const grp = L.items.slice(g, g + 3);
+    grp.forEach((it, k) => { steps.push({ t: 'learn', it }); if (k) steps.push({ t: 'listen', it: grp[k - 1] }); });
+    steps.push({ t: 'listen', it: grp[grp.length - 1] });
+    shuffle(grp).forEach(it => steps.push({ t: it.multi ? 'build' : 'pick', it }));
+    steps.push({ t: 'speak', it: grp[Math.floor(Math.random() * grp.length)] });
+  }
+  const cyc = ['build', 'speak', 'listen', 'dictate'];
+  L.mix.forEach((it, i) => steps.push({ t: cyc[i % cyc.length], it, fresh: true }));
+  pick(L.items.filter(i => i.multi), 2).forEach(it => steps.push({ t: 'speak', it }));
+  if (L.dialogue) steps.push({ t: 'dialogue', d: L.dialogue });
+  return steps;
+}
+function startToday(L) {
+  const warm = shuffle(dueItems()).slice(0, 6).map(it => ({ t: pick(it.multi ? ['listen', 'build', 'speak', 'dictate'] : ['listen', 'pick', 'speak'], 1)[0], it }));
+  startSession([...warm, ...buildLesson(L)], { lesson: L, title: L.title, pool: poolUpTo(L.idx) });
+}
+function startLesson(L) { startSession(buildLesson(L), { lesson: L, title: L.title, pool: poolUpTo(L.idx) }); }
+function startReview() {
+  const due = shuffle(dueItems()).slice(0, 12);
+  const items = due.length >= 4 ? due : due.concat(pick(learned().filter(i => !due.includes(i)), 8 - due.length));
+  if (!items.length) return home();
+  startSession(shuffle(items).map(it => ({ t: pick(it.multi ? ['listen', 'build', 'speak', 'dictate'] : ['listen', 'pick', 'speak'], 1)[0], it })), { title: 'Review', review: true });
+}
+function distractors(it, n, pool) {
+  const same = pool.filter(o => o !== it && o.en !== it.en && romOf(o) !== romOf(it));
+  const close = same.filter(o => o.multi === it.multi), near = close.filter(o => Math.abs(o.lesson - it.lesson) <= 2);
+  const out = pick(near, n); for (const src of [close, same]) for (const o of shuffle(src)) { if (out.length >= n) break; if (!out.includes(o)) out.push(o); }
+  return out.slice(0, n);
+}
+
+/* ---------- session runner ---------- */
+function startSession(steps, meta) {
+  sess = { steps, i: 0, right: 0, wrong: 0, meta, pool: meta.pool || learned().concat(LESSONS[0].items), missed: new Set(), seen: new Set() };
+  const bar = h('i', { style: 'width:0%' });
+  sess.bar = bar; sess.stage = h('div', { class: 'stage' }); sess.foot = h('div', { class: 'foot' });
+  let armed = false;
+  const quit = h('button', { class: 'iconbtn', 'aria-label': 'Quit', onclick: () => { if (sess.i === 0 || armed) return endSession(false); armed = true; sess.foot.prepend(h('div', { class: 'fb no' }, h('div', { class: 'tx' }, h('b', {}, 'Quit this session?'), h('small', {}, 'Tap ✕ again to leave. Progress in this session is lost.')))); } }, icon('x'));
+  mount(h('div', { class: 'sess-top' }, quit, h('div', { class: 'bar' }, bar)), sess.stage, sess.foot);
+  renderStep();
+}
+function endSession(finished) {
+  if (activeRec) try { activeRec.abort(); } catch (e) {}
+  const s = sess; sess = null; TTS.stop();
+  if (!finished) return home();
+  const graded = s.right + s.wrong, acc = graded ? Math.round(s.right / graded * 100) : 100;
+  const xp = s.meta.free ? 0 : 10 + s.right;
+  if (!s.meta.free) {
+    s.seen.forEach(it => grade(it, !s.missed.has(it)));
+    if (s.meta.lesson) S.done[s.meta.lesson.id] = (S.done[s.meta.lesson.id] || 0) + 1;
+    addXp(xp); save();
+  }
+  if (s.meta.free) return home();
+  blip(true);
+  const nx = nextLesson(), more = s.meta.lesson && !S.done[nx.id];
+  mount(h('div', { class: 'stage' }, h('div', { class: 'done enter' },
+    h('div', { class: 'big' }, acc >= 90 ? '🎉' : acc >= 70 ? '👏' : '💪'),
+    h('h2', {}, s.meta.lesson ? 'Lesson complete' : 'Session complete'),
+    h('div', { class: 'stats' }, h('div', { class: 'stat' }, h('b', {}, '+' + xp), h('span', {}, 'XP')), h('div', { class: 'stat' }, h('b', {}, acc + '%'), h('span', {}, 'accuracy')), h('div', { class: 'stat' }, h('b', {}, String(liveStreak())), h('span', {}, 'day streak'))),
+    h('p', { class: 'center' }, s.missed.size ? `${s.missed.size} ${s.missed.size === 1 ? 'item' : 'items'} will come back sooner for extra practice.` : 'Clean run. These items return in a day, then at growing intervals.'))),
+    h('div', { class: 'foot' }, more ? h('button', { class: 'btn', onclick: () => startLesson(nx) }, 'Next lesson') : null, h('button', { class: 'btn' + (more ? ' ghost' : ''), onclick: () => { tab = 'learn'; home(); } }, 'Back to home')));
+}
+function nextStep() { sess.i++; if (sess.i >= sess.steps.length) return endSession(true); renderStep(); }
+function setFoot(...kids) { sess.foot.replaceChildren(...kids.flat().filter(Boolean)); }
+function result(step, ok) {
+  const it = step.it;
+  sess.seen.add(it);
+  if (ok) sess.right++; else { sess.wrong++; sess.missed.add(it); if (!step.retry) sess.steps.push({ ...step, retry: true }); }
+  blip(ok);
+  const replay = h('button', { class: 'pbtn sm', 'aria-label': 'Play answer', onclick: () => say(it) }, icon('speaker'));
+  setFoot(h('div', { class: 'fb enter ' + (ok ? 'ok' : 'no') },
+      h('div', { class: 'tx' }, h('b', {}, ok ? pick(['Correct', 'Nice', 'Exactly', 'Good ear'], 1)[0] : 'Correct answer'), romEl(romOf(it)), h('small', {}, it.en), h('small', { class: 'thai' }, thaiOf(it))), replay),
+    h('button', { class: 'btn' + (ok ? '' : ' gold'), onclick: nextStep }, 'Continue'));
+  if (step.t !== 'speak') say(it);
+}
+function renderStep() {
+  const step = sess.steps[sess.i];
+  sess.bar.style.width = (sess.i / sess.steps.length * 100) + '%';
+  sess.stage.replaceChildren(); sess.stage.className = 'stage enter'; sess.stage.scrollTop = 0;
+  void sess.stage.offsetWidth;
+  STEP[step.t](step, sess.stage);
+}
+const title = (small, big) => h('h2', {}, h('small', {}, small), big);
+
+const TONES = [['mid', 'maa', 'flat and steady', 'M2 14 H42'], ['low', 'màa', 'low and flat', 'M2 20 H42'], ['fall', 'mâa', 'starts high, drops', 'M2 8 C16 2 30 8 42 24'], ['high', 'máa', 'high, lifts at the end', 'M2 12 C20 10 32 8 42 3'], ['rise', 'mǎa', 'dips, then climbs', 'M2 12 C14 26 28 24 42 3']];
+const STEP = {
+  tones(step, root) {
+    root.append(h('div', { class: 'tip' }, h('div', { class: 'eyebrow' }, 'Before you start'), h('h2', {}, 'Thai has five tones'),
+      h('p', {}, 'The melody of a syllable is part of the word. You do not need to study this. Just notice the colours and copy what you hear, the way you would copy a tune.'),
+      h('div', { class: 'tones' }, TONES.map(([c, r, d, p]) => h('div', {}, h('span', { html: `<svg viewBox="0 0 44 26"><path d="${p}" fill="none" stroke="var(--t-${c})" stroke-width="3.5" stroke-linecap="round"/></svg>` }).firstChild, romEl(r), h('small', {}, d))))));
+    setFoot(h('button', { class: 'btn', onclick: nextStep }, 'Got it'));
+  },
+  tip(step, root) {
+    root.append(h('div', { class: 'tip' }, h('div', { class: 'eyebrow' }, 'The logic'), h('h2', {}, step.tip[0]), h('p', { html: step.tip[1] })));
+    setFoot(h('button', { class: 'btn', onclick: nextStep }, 'Got it'));
+  },
+  learn(step, root) {
+    const it = step.it; sess.seen.add(it);
+    root.append(h('div', { class: 'learn' },
+      h('div', { class: 'eyebrow' }, it.multi ? 'New phrase' : 'New word'),
+      it.em ? h('div', { class: 'pic' }, it.em) : null,
+      playBtns(it), romEl(romOf(it)), h('div', { class: 'en' }, it.en), h('div', { class: 'thai' }, thaiOf(it)),
+      it.multi ? wordChips(it) : null,
+      h('div', { class: 'hint' }, it.multi ? 'Tap a word to hear it alone. Then say the whole phrase out loud.' : 'Listen, then say it out loud twice.')));
+    setFoot(h('button', { class: 'btn', onclick: nextStep }, 'I said it'));
+    say(it);
+  },
+  listen(step, root) {
+    const it = step.it, opts = shuffle([it, ...distractors(it, 3, sess.pool)]);
+    const two = opts.every(o => !o.multi && o.en.length < 22);
+    const box = h('div', { class: 'opts' + (two ? ' two' : '') });
+    opts.forEach(o => box.append(h('button', { class: 'opt', onclick: e => {
+      box.classList.add('locked'); const ok = o === it;
+      e.currentTarget.classList.add(ok ? 'ok' : 'no'); if (!ok) [...box.children][opts.indexOf(it)].classList.add('ok');
+      result(step, ok);
+    } }, two && o.em ? h('span', { class: 'em' }, o.em) : null, h('span', {}, o.en))));
+    root.append(title('Listen', 'What does it mean?'), playBtns(it), box);
+    setFoot(); say(it);
+  },
+  pick(step, root) {
+    const it = step.it, opts = shuffle([it, ...distractors(it, 2, sess.pool)]);
+    let sel = null;
+    const check = h('button', { class: 'btn', disabled: true, onclick: () => {
+      box.classList.add('locked'); const ok = sel === it;
+      [...box.children].forEach((c, i) => { c.classList.remove('sel'); if (opts[i] === it) c.classList.add('ok'); else if (opts[i] === sel) c.classList.add('no'); c.querySelector('.lab').replaceChildren(romEl(romOf(opts[i])), h('span', { class: 'after' }, opts[i].en)); });
+      result(step, ok);
+    } }, 'Check');
+    const box = h('div', { class: 'opts' });
+    opts.forEach((o, i) => box.append(h('button', { class: 'opt', onclick: e => { sel = o; [...box.children].forEach(c => c.classList.remove('sel')); e.currentTarget.classList.add('sel'); check.disabled = false; say(o); } },
+      h('span', { class: 'num' }, icon('speaker')), h('span', { class: 'lab' }, 'Sound ' + (i + 1)))));
+    root.append(title('Choose the sound', 'Which one means…'), h('div', { class: 'prompt' }, it.em ? h('span', { class: 'em' }, it.em) : null, h('span', {}, it.en)), box);
+    setFoot(check);
+  },
+  build(step, root) { buildUI(step, root, false); },
+  dictate(step, root) { buildUI(step, root, true); },
+  speak(step, root) {
+    const it = step.it, canMic = !!SRClass && !micBlocked;
+    const area = h('div', { style: 'display:flex;flex-direction:column;gap:12px' });
+    let revealed = false;
+    const reveal = () => {
+      if (revealed) return; revealed = true;
+      area.replaceChildren(h('div', { class: 'answer enter' }, playBtns(it, { small: true }), romEl(romOf(it)), h('div', { class: 'thai' }, thaiOf(it)), it.multi ? wordChips(it) : null),
+        h('p', { class: 'center' }, 'Compare with what you said. Be honest, it decides when this comes back.'));
+      say(it);
+      setFoot(h('div', { class: 'row' }, h('button', { class: 'btn ghost', onclick: () => result(step, false) }, 'Not yet'), h('button', { class: 'btn', onclick: () => result(step, true) }, 'I said it right')));
+    };
+    const idle = msg => {
+      area.replaceChildren(...(canMic && !micBlocked ? [mic] : []),
+        h('p', { class: 'center' }, msg || (canMic && !micBlocked ? 'Tap the microphone and say it in Thai.' : 'Say it out loud, then check yourself.')));
+      setFoot(h('button', { class: 'btn' + (canMic && !micBlocked ? ' ghost' : ''), onclick: reveal }, canMic && !micBlocked ? 'Show answer instead' : 'I said it. Show answer'),
+        h('button', { class: 'link', onclick: nextStep }, 'Can\'t speak right now'));
+    };
+    const mic = h('button', { class: 'mic', 'aria-label': 'Speak', onclick: async () => {
+      if (mic.classList.contains('on')) { try { activeRec && activeRec.stop(); } catch (e) {} return; }
+      TTS.stop(); mic.classList.add('on');
+      const r = await hear(); mic.classList.remove('on');
+      if (!sess || sess.steps[sess.i] !== step || revealed) return;
+      if (r.alts && matches(it, r.alts)) { area.replaceChildren(h('div', { class: 'heard' }, 'I heard: ' + r.alts[0])); return result(step, true); }
+      if (r.alts) { idle(); area.prepend(h('div', { class: 'heard' }, 'I heard: ' + r.alts[0] + '. Try once more, or check the answer.')); return; }
+      idle(micBlocked ? 'Microphone is not available here. Say it out loud, then check yourself.' : 'I did not catch that. Tap and try again.');
+    } }, icon('mic'));
+    root.append(title('Speak', 'Say it in Thai'), h('div', { class: 'prompt' }, it.em ? h('span', { class: 'em' }, it.em) : null, h('span', {}, it.en)), area);
+    idle();
+  },
+  dialogue(step, root) {
+    const d = step.d, chat = h('div', { class: 'chat' });
+    root.append(title('Conversation', d.title), chat);
+    let i = 0, phase = 1;
+    const bubble = (ln, hidden) => h('button', { class: 'bub enter' + (ln.who === 'B' ? ' me' : '') + (hidden ? ' todo' : ''), onclick: () => say(ln.it) },
+      hidden ? h('small', {}, 'Your turn: ' + ln.it.en) : [romEl(romOf(ln.it)), h('small', {}, ln.it.en), h('small', { class: 'thai' }, thaiOf(ln.it))]);
+    const scroll = () => { root.scrollTop = root.scrollHeight; };
+    const advance = () => {
+      if (i >= d.lines.length) {
+        if (phase === 1) { phase = 2; i = 0; chat.replaceChildren(); root.querySelector('h2').lastChild.textContent = 'Now you play the highlighted part'; return advance(); }
+        return nextStep();
+      }
+      const ln = d.lines[i++], mine = phase === 2 && ln.who === 'B';
+      if (mine) {
+        const b = bubble(ln, true); chat.append(b); scroll();
+        setFoot(h('button', { class: 'btn gold', onclick: () => { b.replaceWith(bubble(ln)); say(ln.it); scroll(); setFoot(h('button', { class: 'btn', onclick: advance }, i >= d.lines.length ? 'Finish' : 'Next line')); } }, 'I said it. Check'));
+      } else {
+        chat.append(bubble(ln)); scroll(); say(ln.it);
+        setFoot(h('button', { class: 'btn', onclick: advance }, i >= d.lines.length ? (phase === 1 ? 'Now your turn' : 'Finish') : 'Next line'));
+      }
+    };
+    advance();
+  },
+};
+function buildUI(step, root, dictate) {
+  const it = step.it, want = toks(it);
+  const known = new Set(sess.pool.flatMap(o => toks(o)));
+  const extra = pick([...known].filter(t => !want.includes(t) && !PARTICLES.has(t) && LEXMAP[t]), Math.min(3, Math.max(2, 6 - want.length)));
+  const tiles = shuffle([...want, ...extra]);
+  const slots = h('div', { class: 'slots' }), bank = h('div', { class: 'bank' });
+  const chosen = [];
+  const check = h('button', { class: 'btn', disabled: true, onclick: () => {
+    slots.classList.add('locked'); bank.classList.add('locked');
+    result(step, chosen.map(c => LEXMAP[c.t].rom).join(' ') === want.map(t => LEXMAP[t].rom).join(' '));
+  } }, 'Check');
+  tiles.forEach(t => {
+    const b = h('button', { class: 'tile', onclick: () => {
+      b.classList.add('used');
+      const c = { t, el: h('button', { class: 'tile', onclick: () => { chosen.splice(chosen.indexOf(c), 1); c.el.remove(); b.classList.remove('used'); check.disabled = !chosen.length; } }, romEl(LEXMAP[t].rom)) };
+      chosen.push(c); slots.append(c.el); check.disabled = false;
+      if (!dictate) sayWord(t);
+    } }, romEl(LEXMAP[t].rom));
+    bank.append(b);
+  });
+  if (dictate) { root.append(title('Listen', 'Build what you hear'), playBtns(it)); say(it); }
+  else root.append(title(step.fresh ? 'New combination' : 'Build it', 'Say this in Thai'), h('div', { class: 'prompt' }, it.em ? h('span', { class: 'em' }, it.em) : null, h('span', {}, it.en)));
+  root.append(slots, bank);
+  setFoot(check);
+}
+
+/* ---------- hands-free player ---------- */
+function startPlayer(items) {
+  const list = shuffle(items); let i = 0, playing = true, wake = null;
+  const en = h('div', { class: 'en' }), rom = h('div', {}), phase = h('div', { class: 'phase' }), count = h('p', { class: 'center' });
+  const pb = h('button', { class: 'pbtn', 'aria-label': 'Play or pause', onclick: () => { playing = !playing; pb.replaceChildren(icon(playing ? 'pause' : 'play')); if (playing) run(); else TTS.stop(); } }, icon('pause'));
+  const skip = h('button', { class: 'pbtn sm', 'aria-label': 'Skip', onclick: () => { i++; if (playing) run(); else show(); } }, icon('next'));
+  player = { id: 0 };
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const show = () => { const it = list[i % list.length]; en.textContent = it.en; rom.replaceChildren(); phase.textContent = 'Paused'; count.textContent = `${i % list.length + 1} of ${list.length}`; };
+  async function run() {
+    const id = ++player.id, live = () => player && player.id === id && playing;
+    TTS.stop();
+    while (live()) {
+      const it = list[i % list.length];
+      en.textContent = it.en; rom.replaceChildren(); count.textContent = `${i % list.length + 1} of ${list.length}`;
+      phase.textContent = 'How do you say…'; await TTS.speak(it.en, { lang: 'en-US' }); if (!live()) return;
+      phase.textContent = 'Your turn. Say it out loud'; await wait(1800 + toks(it).length * 700); if (!live()) return;
+      phase.textContent = 'Listen'; rom.replaceChildren(romEl(romOf(it))); await say(it); if (!live()) return;
+      await wait(900); if (!live()) return;
+      phase.textContent = 'Repeat after me'; await say(it, true); if (!live()) return;
+      await wait(1400 + toks(it).length * 500); if (!live()) return;
+      i++;
+    }
+  }
+  const close = () => { player = null; TTS.stop(); try { wake && wake.release(); } catch (e) {} home(); };
+  mount(h('div', { class: 'sess-top' }, h('button', { class: 'iconbtn', 'aria-label': 'Close', onclick: close }, icon('x')), h('div', { class: 'eyebrow' }, 'Listen and repeat')),
+    h('div', { class: 'stage' }, h('div', { class: 'player' }, phase, en, rom, h('div', { class: 'play' }, pb, skip), count)),
+    h('div', { class: 'foot' }, h('p', { class: 'center' }, 'Keep the screen on. Answer in the pause before you hear the Thai.')));
+  try { navigator.wakeLock && navigator.wakeLock.request('screen').then(w => { wake = w; }).catch(() => {}); } catch (e) {}
+  run();
+}
+
+/* ---------- boot ---------- */
+function start() { if (!S.onboarded || !S.gender) onboard(); else home(); }
+start();
+})();
+</script>
+<script>if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {});</script>
+</body>
+</html>
